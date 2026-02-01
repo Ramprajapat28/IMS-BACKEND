@@ -1,7 +1,7 @@
 const db = require('../../models/libs/Db');
 const ProductModel = require("../../models/productModel");
 const OrderModel = require("../../models/OrderModel")
-const  ItemModel = require("../../models/ItemModel")
+const ItemModel = require("../../models/ItemModel")
 const CategoryModel = require("../../models/CategoryModel")
 
 class DashboardManager {
@@ -11,7 +11,7 @@ class DashboardManager {
 
     return await qb('orders as o')
       .join('products as p', 'p.product_id', 'o.product_id') //  NO p.id
-      .where('o.status', 'sold')   
+      .where('o.status', 'sold')
       .select(
         'p.product_id as product_id', //  correct PK
         'p.name',
@@ -32,7 +32,7 @@ class DashboardManager {
 
     return await qb('orders as o')
       .join('products as p', 'p.product_id', 'o.product_id') // 
-      .where('o.status', 'sold')   
+      .where('o.status', 'sold')
       .select(
         'p.product_id as product_id',
         'p.name',
@@ -48,16 +48,16 @@ class DashboardManager {
       .limit(limit);
   }
 
-   static async totalProducts(){
-     const productModel = new ProductModel();
-  const totalProducts = await productModel.countTotalProducts();
+  static async totalProducts() {
+    const productModel = new ProductModel();
+    const totalProducts = await productModel.countTotalProducts();
 
-  return {
-    totalProducts
-  };
-   }
+    return {
+      totalProducts
+    };
+  }
 
-   static async totalOrder(){
+  static async totalOrder() {
     const orderModel = new OrderModel();
     const totalOrder = await orderModel.totalOrder();
 
@@ -65,94 +65,97 @@ class DashboardManager {
       totalOrder
     };
 
-   }
+  }
 
 
-// static async getDetailOfLowAndOutOfStock(lowStockLimit = 5) {
-//   const itemModel = new ItemModel();
+  // static async getDetailOfLowAndOutOfStock(lowStockLimit = 5) {
+  //   const itemModel = new ItemModel();
 
-//   const groupedItems = await itemModel.countAvailableItemsByProduct();
+  //   const groupedItems = await itemModel.countAvailableItemsByProduct();
 
-//   return groupedItems.map(item => {
-//     const count = Number(item.available_count);
+  //   return groupedItems.map(item => {
+  //     const count = Number(item.available_count);
 
-//     let stock_status = "in_stock";
-//     if (count === 0) stock_status = "out_of_stock";
-//     else if (count <= lowStockLimit) stock_status = "low_stock";
+  //     let stock_status = "in_stock";
+  //     if (count === 0) stock_status = "out_of_stock";
+  //     else if (count <= lowStockLimit) stock_status = "low_stock";
 
-//     return {
-//       product_id: item.product_id,
-//       product_name: item.name,
-//       available_count: count,
-//       stock_status
-//     };
-//   }).filter(item => item.stock_status !== "in_stock");
-// }
-// static async getLowAndOutOfStockCount(lowStockLimit = 5) {
-//   const itemModel = new ItemModel();
+  //     return {
+  //       product_id: item.product_id,
+  //       product_name: item.name,
+  //       available_count: count,
+  //       stock_status
+  //     };
+  //   }).filter(item => item.stock_status !== "in_stock");
+  // }
+  // static async getLowAndOutOfStockCount(lowStockLimit = 5) {
+  //   const itemModel = new ItemModel();
 
-//   const groupedItems = await itemModel.countAvailableItemsByProduct();
+  //   const groupedItems = await itemModel.countAvailableItemsByProduct();
 
-//   let lowStockCount = 0;
-//   let outOfStockCount = 0;
+  //   let lowStockCount = 0;
+  //   let outOfStockCount = 0;
 
-//   for (const item of groupedItems) {
-//     const count = Number(item.available_count);
+  //   for (const item of groupedItems) {
+  //     const count = Number(item.available_count);
 
-//     if (count === 0) {
-//       outOfStockCount++;
-//     } else if (count <= lowStockLimit) {
-//       lowStockCount++;
-//     }
-//   }
+  //     if (count === 0) {
+  //       outOfStockCount++;
+  //     } else if (count <= lowStockLimit) {
+  //       lowStockCount++;
+  //     }
+  //   }
 
-//   return {
-//     low_stock_products: lowStockCount,
-//     out_of_stock_products: outOfStockCount
-//   };
-// }
-static async getDetailOfLowAndOutOfStock(lowStockLimit = 10) {
-  const itemModel = new ItemModel();
+  //   return {
+  //     low_stock_products: lowStockCount,
+  //     out_of_stock_products: outOfStockCount
+  //   };
+  // }
+  static async getDetailOfLowAndOutOfStock(lowStockLimit = 10) {
+    const itemModel = new ItemModel();
 
-  const groupedItems = await itemModel.countAvailableItemsByProduct();
+    const groupedItems = await itemModel.countAvailableItemsByProduct();
 
-  let lowStockCount = 0;
-  let outOfStockCount = 0;
+    let lowStockCount = 0;
+    let outOfStockCount = 0;
 
-  const products = groupedItems
-    .map(item => {
-      const count = Number(item.available_count);
+    const products = groupedItems
+      .map(item => {
+        const count = Number(item.available_count);
+        const reorderLevel = Number(item.reorder_level || 10);
 
-      let stock_status = "in_stock";
+        let stock_status = "in_stock";
 
-      if (count === 0) {
-        stock_status = "out_of_stock";
-        outOfStockCount++;
-      } else if (count <= lowStockLimit) {
-        stock_status = "low_stock";
-        lowStockCount++;
-      }
+        if (count === 0) {
+          stock_status = "out_of_stock";
+          outOfStockCount++;
+        } else if (count <= reorderLevel) {
+          stock_status = "low_stock";
+          lowStockCount++;
+        }
 
-      return {
-        product_id: item.product_id,
-        product_name: item.name, // comes from items table
-        available_count: count,
-        stock_status
-      };
-    })
-    .filter(item => item.stock_status !== "in_stock");
+        return {
+          product_id: item.product_id,
+          product_name: item.name,
+          available_count: count,
+          reorder_level: reorderLevel,
+          stock_status
+        };
+      })
+      .filter(item => item.stock_status !== "in_stock");
 
-  return {
-   stock_status: {
-      low_stock_products: lowStockCount,
-      out_of_stock_products: outOfStockCount
-    },
-    products
-  };
-}
+    return {
+      stock_status: {
+        low_stock_products: lowStockCount,
+        out_of_stock_products: outOfStockCount
+      },
+      products
+    };
+  }
 
   static async getProductCountByCategory() {
-    const data = await CategoryModel.countProductsByCategory();
+    const categoryModel = new CategoryModel();
+    const data = await categoryModel.countProductsByCategory();
 
     // Normalize PostgreSQL count (string → number)
     return data.map(row => ({

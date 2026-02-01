@@ -183,19 +183,24 @@ class ItemModel extends BaseModel {
     }
   }
 
-  // ✅ FIXED QUERY
   async countAvailableItemsByProduct() {
     try {
       const qb = await this.getQueryBuilder();
 
-      return await qb("items")
-        .select("product_id")
-        .count("* as available_count")
-        .where({
-          status: ITEM_STATUS.AVAILABLE,
-          is_deleted: false,
+      return await qb("products as p")
+        .select([
+          "p.product_id",
+          "p.name",
+          "p.reorder_level",
+          qb.raw("COUNT(i.id)::integer as available_count")
+        ])
+        .leftJoin("items as i", function () {
+          this.on("p.product_id", "i.product_id")
+            .andOn("i.status", qb.raw("?", [ITEM_STATUS.AVAILABLE]))
+            .andOn("i.is_deleted", qb.raw("false"));
         })
-        .groupBy("product_id");
+        .where("p.is_deleted", false)
+        .groupBy("p.product_id", "p.name", "p.reorder_level");
     } catch (e) {
       throw new DatabaseError(e);
     }

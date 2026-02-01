@@ -26,7 +26,8 @@ class ProductModel extends BaseModel {
       "mrp",
       "discounted_price",
       "gst_percentage",
-      "cost_to_consumer"
+      "cost_to_consumer",
+      "reorder_level"
     ];
   }
 
@@ -47,7 +48,8 @@ class ProductModel extends BaseModel {
       "mrp",
       "discounted_price",
       "gst_percentage",
-      "cost_to_consumer"
+      "cost_to_consumer",
+      "reorder_level"
     ];
   }
 
@@ -87,6 +89,7 @@ class ProductModel extends BaseModel {
           "products.discounted_price",
           "products.gst_percentage",
           "products.cost_to_consumer",
+          "products.reorder_level",
           "category.category_name as category_name",
           "category.global_category_id as global_category_id",
           "gc.category_name as global_category_name",
@@ -137,6 +140,7 @@ class ProductModel extends BaseModel {
           "products.discounted_price",
           "products.gst_percentage",
           "products.cost_to_consumer",
+          "products.reorder_level",
           "category.category_name as category_name",
           "gc.category_name as global_category_name",
         ])
@@ -204,6 +208,7 @@ class ProductModel extends BaseModel {
             "products.discounted_price",
             "products.gst_percentage",
             "products.cost_to_consumer",
+            "products.reorder_level",
             "category.category_name as category_name",
             "category.global_category_id as global_category_id",
             "gc.category_name as global_category_name",
@@ -222,19 +227,6 @@ class ProductModel extends BaseModel {
       throw new DatabaseError(e);
     }
   }
-
-  // async countByCategoryId(category_id) {
-  //   try {
-  //     const qb = await this.getQueryBuilder();
-
-  //     const [{ count }] = await qb("products")
-  //       .where({
-  //         category_id,
-  //         is_deleted: false,
-  //       })
-  //       .count("* as count");
-
-
 
   /**
    * ✅ Create product
@@ -285,7 +277,6 @@ class ProductModel extends BaseModel {
       }
 
       return this.findById(product_id);
-      return updatedProduct ? this.normalizeProduct(updatedProduct) : null;
     } catch (e) {
       throw new DatabaseError(e);
     }
