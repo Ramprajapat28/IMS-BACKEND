@@ -130,16 +130,27 @@ class CategoryManager {
     return categoryModel.create({
       category_name: value.category_name,
       global_category_id: value.global_category_id,
-      logo_url: value.logo_url || null
+      logo_url: value.logo_url || null,
+      sizes: JSON.stringify(value.sizes || [])
     });
   }
 
   static async updateCategory(categoryId, payload) {
+    const { error, value } = createCategorySchema.validate(payload, {
+      abortEarly: false,
+      stripUnknown: true
+    });
+
+    if (error) {
+      throw new JoiValidatorError(error);
+    }
+
     const categoryModel = new CategoryModel(null);
     return categoryModel.update(categoryId, {
-      category_name: payload.category_name,
-      global_category_id: payload.global_category_id,
-      logo_url: payload.logo_url
+      category_name: value.category_name,
+      global_category_id: value.global_category_id,
+      logo_url: value.logo_url,
+      sizes: JSON.stringify(value.sizes || [])
     });
   }
   static async getGlobalCategoryById(categoryId) {

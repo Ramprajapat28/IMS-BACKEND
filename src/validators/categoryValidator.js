@@ -58,8 +58,12 @@ const createCategorySchema = joi.object({
     .messages({
       "string.base": COMMON_MESSAGES.STRING_BASE,
       "string.uri": "Logo URL must be a valid URI"
-    })
-
+    }),
+  sizes: joi.array()
+    .items(joi.string().trim().min(1))
+    .allow(null)
+    .optional()
+    .label("Sizes")
 });
 const categoryIdSchema = joi.object({
   category_id: joi.number()

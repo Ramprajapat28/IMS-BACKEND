@@ -6,7 +6,7 @@ class CategoryModel extends BaseModel {
 
   async findGlobalByName(categoryName) {
     const qb = await this.getQueryBuilder();
-    return qb
+    const category = await qb
       .select("global_category_id", "category_name", "logo_url")
       .from(`${PUBLIC_SCHEMA}.global_category`)
       .whereRaw("LOWER(category_name) = ?", [
@@ -14,6 +14,19 @@ class CategoryModel extends BaseModel {
       ])
       .andWhere(this.whereStatement())
       .first();
+
+    return category;
+  }
+
+  /**
+   * Normalize category to ensure consistent JSON structure
+   */
+  normalizeCategory(category) {
+    if (!category) return null;
+    return {
+      ...category,
+      sizes: typeof category.sizes === 'string' ? JSON.parse(category.sizes) : (category.sizes || [])
+    };
   }
 
   async findGlobalById(globalCategoryId) {
@@ -26,13 +39,15 @@ class CategoryModel extends BaseModel {
 
   async findByNameAndGlobal(categoryName, globalCategoryId) {
     const qb = await this.getQueryBuilder();
-    return qb("category")
-      .select("category_id", "category_name", "global_category_id", "logo_url")
+    const category = await qb("category")
+      .select("category_id", "category_name", "global_category_id", "logo_url", "sizes")
       .where(this.whereStatement({
         category_name: categoryName,
         global_category_id: globalCategoryId
       }))
       .first();
+
+    return this.normalizeCategory(category);
   }
 
   async findAllGlobal() {
@@ -95,12 +110,13 @@ class CategoryModel extends BaseModel {
     try {
       const qb = await this.getQueryBuilder();
 
-      return await qb("category as c")
+      const categories = await qb("category as c")
         .select(
           "c.category_id",
           "c.category_name",
           "c.global_category_id",
           "c.logo_url",
+          "c.sizes",
           qb.raw(`(
             COUNT(DISTINCT p.product_code_id) + 
             COUNT(CASE WHEN p.product_code_id IS NULL THEN p.product_id END)
@@ -111,8 +127,10 @@ class CategoryModel extends BaseModel {
             .andOn("p.is_deleted", qb.raw("false"));
         })
         .where("c.is_deleted", false)
-        .groupBy("c.category_id", "c.category_name", "c.global_category_id", "c.logo_url")
+        .groupBy("c.category_id", "c.category_name", "c.global_category_id", "c.logo_url", "c.sizes")
         .orderBy("c.category_id", "asc");
+
+      return categories.map(c => this.normalizeCategory(c));
 
     } catch (e) {
       throw new DatabaseError(e);
@@ -121,11 +139,13 @@ class CategoryModel extends BaseModel {
 
   async findById(category_id) {
     const qb = await this.getQueryBuilder();
-    return qb
-      .select("category_id", "category_name", "is_deleted", "logo_url")
+    const category = await qb
+      .select("category_id", "category_name", "is_deleted", "logo_url", "sizes")
       .from("category")
       .where({ category_id })
       .first();
+
+    return this.normalizeCategory(category);
   }
 
   async create(categoryData) {
@@ -134,9 +154,9 @@ class CategoryModel extends BaseModel {
       const [category] = await qb
         .from("category")
         .insert(categoryData)
-        .returning(["category_id", "category_name", "logo_url"]);
+        .returning(["category_id", "category_name", "logo_url", "sizes"]);
 
-      return category;
+      return this.normalizeCategory(category);
     } catch (e) {
       throw new DatabaseError(e);
     }
@@ -149,9 +169,9 @@ class CategoryModel extends BaseModel {
         .from("category")
         .where({ category_id })
         .update(categoryData)
-        .returning(["category_id", "category_name", "logo_url"]);
+        .returning(["category_id", "category_name", "logo_url", "sizes"]);
 
-      return category;
+      return this.normalizeCategory(category);
     } catch (e) {
       throw new DatabaseError(e);
     }
@@ -179,11 +199,13 @@ class CategoryModel extends BaseModel {
 
   async findAll() {
     const qb = await this.getQueryBuilder();
-    return qb
-      .select("category_id", "category_name", "global_category_id", "logo_url")
+    const categories = await qb
+      .select("category_id", "category_name", "global_category_id", "logo_url", "sizes")
       .from("category")
       .where(this.whereStatement())
       .orderBy("category_id", "asc");
+
+    return categories.map(c => this.normalizeCategory(c));
   }
 }
 
