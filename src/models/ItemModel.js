@@ -8,9 +8,9 @@ class ItemModel extends BaseModel {
     this.tableName = "items";
   }
 
-  // ✅ FIXED: removed invalid "name" column
+
   getPublicColumns() {
-    return ["id", "shelf_id", "rack_id", "product_id", "status", "is_deleted"];
+    return ["id", "name", "shelf_id", "rack_id", "product_id", "status", "is_deleted"];
   }
 
   async findAllPaginated(filters = {}, page = 1, limit = 10) {
@@ -201,10 +201,11 @@ class ItemModel extends BaseModel {
     }
   }
 
-  async softDelete(product_id, quantity, status, shelf_id = null) {
+  async softDelete(product_id, quantity, status, shelf_id = null, rack_id = null) {
     try {
       const qb = await this.getQueryBuilder();
-      const isDeleted = status !== ITEM_STATUS.RETURNED;
+      const isReturn = status === ITEM_STATUS.AVAILABLE || status === ITEM_STATUS.RETURNED;
+      const isDeleted = !isReturn;
 
       return qb("items")
         .whereIn("id", function () {
@@ -212,11 +213,18 @@ class ItemModel extends BaseModel {
             .from("items")
             .where({
               product_id,
-              is_deleted: !isDeleted,
+              is_deleted: !isDeleted, // if we want to set is_deleted=false (return), we look for is_deleted=true (sold)
             });
 
-          if (shelf_id) {
-            subQuery.where("shelf_id", shelf_id);
+          // Only filter by original location if we are SELLING (decreasing stock)
+          // If we are RETURNING, we can return from any previous sale of this product
+          if (!isReturn) {
+            if (shelf_id) {
+              subQuery.where("shelf_id", shelf_id);
+            }
+            if (rack_id) {
+              subQuery.where("rack_id", rack_id);
+            }
           }
 
           subQuery.limit(quantity);
@@ -224,6 +232,8 @@ class ItemModel extends BaseModel {
         .update({
           is_deleted: isDeleted,
           status,
+          shelf_id: isReturn ? (shelf_id || null) : qb.raw("shelf_id"), // Update location on return
+          rack_id: isReturn ? (rack_id || null) : qb.raw("rack_id"),   // Update location on return
           updated_at: qb.raw("CURRENT_TIMESTAMP"),
         });
     } catch (e) {
@@ -240,14 +250,22 @@ class ItemModel extends BaseModel {
         "items.product_id",
         "items.status",
         "items.shelf_id",
+        "items.rack_id",
         "items.created_at",
 
-        // Location info
+        // Location info (shelf-based)
         "shelf.shelf_name",
         "shelf.room_id",
         "shelf.warehouse_id",
         "rooms.room_name",
         "warehouses.name as warehouse_name",
+
+        // Location info (rack-based)
+        "racks.rack_name",
+        "racks.room_id as rack_room_id",
+        "racks.warehouse_id as rack_warehouse_id",
+        "rack_rooms.room_name as rack_room_name",
+        "rack_warehouses.name as rack_warehouse_name",
 
         // Product info (redundant but useful for join validation)
         "products.name as product_name",
@@ -258,8 +276,12 @@ class ItemModel extends BaseModel {
         .select(selectColumns)
         .leftJoin("products", "items.product_id", "products.product_id")
         .leftJoin("shelf", "items.shelf_id", "shelf.shelf_id")
+        .leftJoin("racks", "items.rack_id", "racks.rack_id")
         .leftJoin("rooms", "shelf.room_id", "rooms.room_id")
         .leftJoin("warehouses", "shelf.warehouse_id", "warehouses.warehouse_id")
+        // Join rooms and warehouses for rack-based items
+        .leftJoin("rooms as rack_rooms", "racks.room_id", "rack_rooms.room_id")
+        .leftJoin("warehouses as rack_warehouses", "racks.warehouse_id", "rack_warehouses.warehouse_id")
         .where("items.product_id", product_id)
         .where("items.is_deleted", false);
 
@@ -276,16 +298,20 @@ class ItemModel extends BaseModel {
         "items.id as item_id",
         "items.product_id",
         "items.status",
-        "items.shelf_id", // Keep for reference
-        // Location info
+        "items.shelf_id",
+        "items.rack_id",
+        // Location info (shelf)
         "shelf.shelf_name",
         "rooms.room_name",
         "warehouses.name as warehouse_name",
+        // Location info (rack)
+        "racks.rack_name",
       ];
 
       return await qb("items")
         .select(selectColumns)
         .leftJoin("shelf", "items.shelf_id", "shelf.shelf_id")
+        .leftJoin("racks", "items.rack_id", "racks.rack_id")
         .leftJoin("rooms", "shelf.room_id", "rooms.room_id")
         .leftJoin("warehouses", "shelf.warehouse_id", "warehouses.warehouse_id")
         .whereIn("items.product_id", productIds)

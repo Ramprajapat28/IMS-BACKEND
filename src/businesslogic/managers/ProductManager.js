@@ -195,27 +195,52 @@ class ProductManager {
 
 
 
-      // Aggregate items by location (Warehouse -> Room -> Shelf) and status
+      // Aggregate items by location (Warehouse -> Room -> Shelf OR Rack) and status
       const stockMap = new Map();
 
       items.forEach(item => {
-        // Handle unassigned/missing location data gracefully
-        const shelfName = item.shelf_name || "Unassigned";
-        const roomName = item.room_name || "-";
-        const warehouseName = item.warehouse_name || "-";
+        // Determine if item is in shelf or rack
+        const isRackItem = item.rack_id && !item.shelf_id;
+
+        // Handle location data gracefully
+        let locationName, roomName, warehouseName, roomId, warehouseId;
+
+        if (isRackItem) {
+          // Item is in a rack
+          locationName = item.rack_name || "Unassigned";
+          // For racks, we need to get warehouse/room from rack relationships
+          // The query already joins this data via rack_room_id and rack_warehouse_id
+          roomId = item.rack_room_id;
+          warehouseId = item.rack_warehouse_id;
+          roomName = item.rack_room_name || "-";
+          warehouseName = item.rack_warehouse_name || "-";
+        } else {
+          // Item is in a shelf (or unassigned)
+          locationName = item.shelf_name || "Unassigned";
+          roomName = item.room_name || "-";
+          warehouseName = item.warehouse_name || "-";
+          roomId = item.room_id;
+          warehouseId = item.warehouse_id;
+        }
+
         const status = item.status || "available";
 
-        const key = `${item.warehouse_id}|${item.room_id}|${item.shelf_id}|${status}`;
+        // Include rack_id in the key for proper grouping
+        const key = `${warehouseId}|${roomId}|${item.shelf_id}|${item.rack_id}|${status}`;
 
         if (!stockMap.has(key)) {
           stockMap.set(key, {
             product_id: item.product_id,
-            warehouse_id: item.warehouse_id,
-            room_id: item.room_id,
+            warehouse_id: warehouseId,
+            room_id: roomId,
             shelf_id: item.shelf_id,
+            rack_id: item.rack_id,
             warehouse_name: warehouseName,
             room_name: roomName,
-            shelf_name: shelfName,
+            shelf_name: isRackItem ? item.rack_name : item.shelf_name,  // Use rack_name for rack items
+            rack_name: item.rack_name,
+            location_name: locationName,  // The display name (shelf or rack)
+            is_rack: isRackItem,
             status: status,
             item_count: 0
           });
@@ -472,7 +497,11 @@ class ProductManager {
           if (!locationMap[item.product_id]) {
             locationMap[item.product_id] = new Set();
           }
-          const loc = `${item.room_name || '?'}-${item.shelf_name || '?'}`;
+          // Handle both shelf and rack items
+          const locName = item.rack_id && !item.shelf_id
+            ? (item.rack_name || '?')  // Rack item
+            : (item.shelf_name || '?'); // Shelf item
+          const loc = `${item.room_name || '?'}-${locName}`;
           locationMap[item.product_id].add(loc);
         });
       }
@@ -568,7 +597,11 @@ class ProductManager {
           if (!locationMap[item.product_id]) {
             locationMap[item.product_id] = new Set();
           }
-          const loc = `${item.room_name || '?'}-${item.shelf_name || '?'}`;
+          // Handle both shelf and rack items
+          const locName = item.rack_id && !item.shelf_id
+            ? (item.rack_name || '?')  // Rack item
+            : (item.shelf_name || '?'); // Shelf item
+          const loc = `${item.room_name || '?'}-${locName}`;
           locationMap[item.product_id].add(loc);
         });
       }

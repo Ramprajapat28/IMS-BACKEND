@@ -18,7 +18,7 @@ router.post(
         message: "Registration successful"
       });
     },
-    [ACCESS_ROLES.ACCOUNT_SUPER_ADMIN]
+    [ACCESS_ROLES.ALL]
   )
 );
 

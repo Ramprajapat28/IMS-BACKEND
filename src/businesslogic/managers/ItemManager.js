@@ -41,6 +41,7 @@ class itemManager {
       for (let i = 0; i < quantity; i++) {
         const item = await itemModel.create(
           {
+            name: Product.name, // Product name for the item
             shelf_id: shelf_id || null,
             rack_id: rack_id || null,
           },
@@ -61,8 +62,9 @@ class itemManager {
     quantity,
     status = ITEM_STATUS.SOLD,
     order_id = null,
-    shelf_id = null, // 🆕 you need to know which shelf the product is coming from
-    mode = ORDER_MODE.ONLINE // 🆕 Added mode (Online/Offline)
+    shelf_id = null,
+    rack_id = null,  // 🆕 Can sell from racks too
+    mode = ORDER_MODE.ONLINE
   ) {
     try {
       const itemModel = new ItemModel();
@@ -77,10 +79,18 @@ class itemManager {
         throw new Error(`Invalid item status: ${normalizedStatus}`);
       }
 
-      const isReturn = normalizedStatus === ITEM_STATUS.RETURNED;
+      const isReturn = normalizedStatus === ITEM_STATUS.RETURNED || normalizedStatus === ITEM_STATUS.AVAILABLE;
 
       if (!isReturn && quantity <= 0) {
         throw new Error("Quantity must be greater than 0");
+      }
+
+      // Validate that either shelf_id OR rack_id is provided (not both, not neither)
+      if (!isReturn && !shelf_id && !rack_id) {
+        throw new Error("Either shelf_id or rack_id is required");
+      }
+      if (shelf_id && rack_id) {
+        throw new Error("Cannot specify both shelf_id and rack_id");
       }
 
       // Check stock only for sell/outward
@@ -96,26 +106,24 @@ class itemManager {
         product_id,
         quantity,
         normalizedStatus,
-        shelf_id // ✅ Pass shelf_id to delete specific items
+        shelf_id,
+        rack_id  // ✅ Pass rack_id to delete rack items
       );
 
       if (isReturn && affected === 0) {
         throw new Error("No sold items found to return");
       }
 
-      // ✅ Create order if selling and no existing order_id provided
+      // ✅ Create order if affected > 0 (sales and returns)
       let createdOrderId = order_id;
-      if (!isReturn && affected > 0) {
-        if (!shelf_id) {
-          throw new Error("Shelf ID is required to create an order");
-        }
-
+      if (affected > 0 && !order_id) {
         const orderData = {
           product_id,
-          shelf_id,
+          shelf_id: shelf_id || null,
+          rack_id: rack_id || null,
           quantity,
-          status: ORDER_STATUS.SOLD,
-          mode // ✅ Save mode (Online/Offline)
+          status: isReturn ? ORDER_STATUS.RETURNED : ORDER_STATUS.SOLD,
+          mode
         };
 
         const createdOrder = await orderModel.create(orderData);
@@ -193,13 +201,21 @@ class itemManager {
       throw new Error(`Failed to get items: ${error.message}`);
     }
   }
-  static async returnStock({ product_id, quantity, shelf_id }) {
+  static async returnStock({ product_id, quantity, shelf_id, rack_id }) {
     try {
       const itemModel = new ItemModel();
       const productModel = new ProductModel();
 
-      if (!product_id || !quantity || !shelf_id) {
-        throw new Error("product_id, quantity, and shelf_id are required");
+      if (!product_id || !quantity) {
+        throw new Error("product_id and quantity are required");
+      }
+
+      // Validate that either shelf_id OR rack_id is provided
+      if (!shelf_id && !rack_id) {
+        throw new Error("Either shelf_id or rack_id is required");
+      }
+      if (shelf_id && rack_id) {
+        throw new Error("Cannot specify both shelf_id and rack_id");
       }
 
       // Verify product exists
@@ -208,26 +224,20 @@ class itemManager {
         throw new Error("Product not found");
       }
 
-      // Perform the return
-      const affected = await itemModel.returnItems(product_id, quantity, shelf_id);
-
-      if (affected === 0) {
-        throw new Error("No sold items found to return (or insufficient quantity sold)");
-      }
-
-      if (affected < quantity) {
-        // This is a partial success case, theoretically. 
-        // But for now we just return what we did.
-        console.warn(`Requested return of ${quantity} but only ${affected} items were found/returned.`);
-      }
-
-      // Create order record for the return
-      await OrderManager.createOrder(product_id, shelf_id, affected, ORDER_STATUS.RETURNED);
+      // Use removeItemStock with RETURNED status to perform the return
+      const result = await this.removeItemStock(
+        product_id,
+        quantity,
+        ITEM_STATUS.AVAILABLE, // Status should be available after return
+        null,  // order_id
+        shelf_id,
+        rack_id
+      );
 
       return {
         success: true,
-        affected,
-        message: `Successfully returned ${affected} item(s)`
+        affected: result.affected,
+        message: `Successfully returned ${result.affected} item(s)`
       };
 
     } catch (error) {

@@ -35,7 +35,11 @@ class AuthenticationManager {
       phone: value.phone,
       gender: value.gender,
       profile_picture_url: value.profile_picture_url,
-      role_id: value.role_id
+      role_id: value.role_id,
+      address: value.address,
+      location: value.location,
+      date_of_birth: value.date_of_birth,
+      postal_code: value.postal_code
     });
 
     delete user.password_hash;

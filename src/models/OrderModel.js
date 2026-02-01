@@ -9,7 +9,7 @@ class OrderModel extends BaseModel {
 
     // ✅ PUBLIC COLUMNS
     getPublicColumns() {
-        return ["order_id", "product_id", "shelf_id", "quantity", "status", "mode", "created_at", "updated_at"];
+        return ["order_id", "product_id", "shelf_id", "rack_id", "quantity", "status", "mode", "created_at", "updated_at"];
     }
 
     async findAllPaginated(filters = {}, page = 1, limit = 10) {
@@ -23,6 +23,7 @@ class OrderModel extends BaseModel {
                 "orders.order_id",
                 "orders.product_id",
                 "orders.shelf_id",
+                "orders.rack_id",
                 "orders.quantity",
                 "orders.status",
                 "orders.created_at",
@@ -39,10 +40,16 @@ class OrderModel extends BaseModel {
                 "shelf.warehouse_id",
                 "shelf.room_id",
                 "shelf.capacity as shelf_capacity",
+                // Rack columns
+                "racks.rack_name",
+                "racks.warehouse_id as rack_warehouse_id",
+                "racks.room_id as rack_room_id",
                 // Warehouse columns
                 "warehouses.name as warehouse_name",
+                "rack_warehouses.name as rack_warehouse_name",
                 // Room columns
                 "rooms.room_name",
+                "rack_rooms.room_name as rack_room_name",
                 // Category columns
                 "category.category_name"
             ];
@@ -51,8 +58,11 @@ class OrderModel extends BaseModel {
                 .select(selectColumns)
                 .leftJoin("products", "orders.product_id", "products.product_id")
                 .leftJoin("shelf", "orders.shelf_id", "shelf.shelf_id")
+                .leftJoin("racks", "orders.rack_id", "racks.rack_id")
                 .leftJoin("rooms", "shelf.room_id", "rooms.room_id")
                 .leftJoin("warehouses", "shelf.warehouse_id", "warehouses.warehouse_id")
+                .leftJoin("rooms as rack_rooms", "racks.room_id", "rack_rooms.room_id")
+                .leftJoin("warehouses as rack_warehouses", "racks.warehouse_id", "rack_warehouses.warehouse_id")
                 .leftJoin("category", "products.category_id", "category.category_id")
                 .where("orders.is_deleted", false
                 );
@@ -63,6 +73,9 @@ class OrderModel extends BaseModel {
             }
             if (filters.shelf_id) {
                 query = query.where("orders.shelf_id", filters.shelf_id);
+            }
+            if (filters.rack_id) {
+                query = query.where("orders.rack_id", filters.rack_id);
             }
             if (filters.status) {
                 query = query.where("orders.status", filters.status);
@@ -82,6 +95,9 @@ class OrderModel extends BaseModel {
             }
             if (filters.shelf_id) {
                 countQuery = countQuery.where("orders.shelf_id", filters.shelf_id);
+            }
+            if (filters.rack_id) {
+                countQuery = countQuery.where("orders.rack_id", filters.rack_id);
             }
             if (filters.status) {
                 countQuery = countQuery.where("orders.status", filters.status);
@@ -124,6 +140,7 @@ class OrderModel extends BaseModel {
                 "orders.order_id",
                 "orders.product_id",
                 "orders.shelf_id",
+                "orders.rack_id",
                 "orders.quantity",
                 "orders.status",
                 "orders.created_at",
@@ -140,10 +157,16 @@ class OrderModel extends BaseModel {
                 "shelf.warehouse_id",
                 "shelf.room_id",
                 "shelf.capacity as shelf_capacity",
+                // Rack columns
+                "racks.rack_name",
+                "racks.warehouse_id as rack_warehouse_id",
+                "racks.room_id as rack_room_id",
                 // Warehouse columns
                 "warehouses.name as warehouse_name",
+                "rack_warehouses.name as rack_warehouse_name",
                 // Room columns
                 "rooms.room_name",
+                "rack_rooms.room_name as rack_room_name",
                 // Category columns
                 "category.category_name"
             ];
@@ -152,8 +175,11 @@ class OrderModel extends BaseModel {
                 .select(selectColumns)
                 .leftJoin("products", "orders.product_id", "products.product_id")
                 .leftJoin("shelf", "orders.shelf_id", "shelf.shelf_id")
+                .leftJoin("racks", "orders.rack_id", "racks.rack_id")
                 .leftJoin("rooms", "shelf.room_id", "rooms.room_id")
                 .leftJoin("warehouses", "shelf.warehouse_id", "warehouses.warehouse_id")
+                .leftJoin("rooms as rack_rooms", "racks.room_id", "rack_rooms.room_id")
+                .leftJoin("warehouses as rack_warehouses", "racks.warehouse_id", "rack_warehouses.warehouse_id")
                 .leftJoin("category", "products.category_id", "category.category_id")
                 .where("orders.order_id", order_id)
                 .where("orders.is_deleted", false)

@@ -67,6 +67,46 @@ const registerSchema = Joi.object({
       "number.positive": COMMON_MESSAGES.NUMBER_POSITIVE,
       "any.required": COMMON_MESSAGES.ANY_REQUIRED
     })
+  ,
+  address: Joi.string()
+    .min(2)
+    .max(50)
+    .required()
+    .label("Address")
+    .messages({
+      "string.base": COMMON_MESSAGES.STRING_BASE,
+      "string.min": COMMON_MESSAGES.STRING_MIN,
+      "string.max": COMMON_MESSAGES.STRING_MAX,
+      "any.required": COMMON_MESSAGES.ANY_REQUIRED
+    })
+    ,
+ 
+    postal_code: Joi.string()
+    .pattern(/^[0-9]{6}$/)
+    .label("Postal code")
+    .messages({
+      "string.pattern.base": "Postal code must be 6 digits"
+    })
+    .optional(),
+    location: Joi.string()
+    .min(2)
+    .max(50)
+    .required()
+    .label("Location")
+    .messages({
+      "string.base": COMMON_MESSAGES.STRING_BASE,
+      "string.min": COMMON_MESSAGES.STRING_MIN,
+      "string.max": COMMON_MESSAGES.STRING_MAX,
+      "any.required": COMMON_MESSAGES.ANY_REQUIRED
+    }),
+    date_of_birth: Joi.date()
+    .required()
+    .label("Date of birth")
+    .messages({
+      "string.base": COMMON_MESSAGES.STRING_BASE,
+      "any.required": COMMON_MESSAGES.ANY_REQUIRED
+    }),
+
 });
 
 const loginSchema = Joi.object({
