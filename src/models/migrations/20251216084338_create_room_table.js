@@ -24,10 +24,7 @@ exports.up = function (knex) {
       // common columns: created_at, updated_at, created_by, etc
       addDefaultColumns(table, knex);
 
-      // indexes
-      table.index("is_active");
-      table.index(["warehouse_id", "is_active"]);
-      table.index(["room_name"]);
+      
     });
 };
 
@@ -36,7 +33,5 @@ exports.up = function (knex) {
  * @returns { Promise<void> }
  */
 exports.down = function (knex) {
-  return knex.schema
-    .withSchema(PUBLIC_SCHEMA)
-    .dropTableIfExists("rooms");
+  return 
 };

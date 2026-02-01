@@ -18,9 +18,7 @@ exports.up = function(knex) {
         addDefaultColumns(table, knex);
         
 
-        // Indexes
-        table.index('name');
-        table.index('is_active');
+       
 }); 
 };
 /**
@@ -29,6 +27,6 @@ exports.up = function(knex) {
  */
 exports.down = function(knex) {
 
-    return knex.schema.withSchema('public').dropTableIfExists('warehouses');
-  
+    return 
+
 };
