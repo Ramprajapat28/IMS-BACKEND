@@ -26,7 +26,7 @@ class ProductModel extends BaseModel {
       "mrp",
       "discounted_price",
       "gst_percentage",
-      "cost_to_consumer",
+      "cost_to_company",
       "reorder_level"
     ];
   }
@@ -48,7 +48,7 @@ class ProductModel extends BaseModel {
       "mrp",
       "discounted_price",
       "gst_percentage",
-      "cost_to_consumer",
+      "cost_to_company",
       "reorder_level"
     ];
   }
@@ -88,7 +88,7 @@ class ProductModel extends BaseModel {
           "products.mrp",
           "products.discounted_price",
           "products.gst_percentage",
-          "products.cost_to_consumer",
+          "products.cost_to_company",
           "products.reorder_level",
           "category.category_name as category_name",
           "category.global_category_id as global_category_id",
@@ -139,7 +139,7 @@ class ProductModel extends BaseModel {
           "products.mrp",
           "products.discounted_price",
           "products.gst_percentage",
-          "products.cost_to_consumer",
+          "products.cost_to_company",
           "products.reorder_level",
           "category.category_name as category_name",
           "gc.category_name as global_category_name",
@@ -207,7 +207,7 @@ class ProductModel extends BaseModel {
             "products.mrp",
             "products.discounted_price",
             "products.gst_percentage",
-            "products.cost_to_consumer",
+            "products.cost_to_company",
             "products.reorder_level",
             "category.category_name as category_name",
             "category.global_category_id as global_category_id",
