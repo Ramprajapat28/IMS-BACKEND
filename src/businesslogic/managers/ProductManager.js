@@ -499,9 +499,16 @@ class ProductManager {
           }
           // Handle both shelf and rack items
           const locName = item.rack_id && !item.shelf_id
-            ? (item.rack_name || '?')  // Rack item
-            : (item.shelf_name || '?'); // Shelf item
-          const loc = `${item.room_name || '?'}-${locName}`;
+            ? (item.rack_name || '')  // Rack item
+            : (item.shelf_name || ''); // Shelf item
+          const room = item.room_name || '';
+
+          let loc = '-';
+          if (room && locName) loc = `${room}-${locName}`;
+          else if (room) loc = `${room}`;
+          else if (locName) loc = `${locName}`;
+          else loc = 'Unassigned';
+
           locationMap[item.product_id].add(loc);
         });
       }
@@ -545,6 +552,8 @@ class ProductManager {
           variant_count: p.variant_count,
           product_image: p.product_image,
           location: location,
+          mrp: p.mrp,
+          discounted_price: p.discounted_price,
           stock_details: []
         };
       });
@@ -599,9 +608,16 @@ class ProductManager {
           }
           // Handle both shelf and rack items
           const locName = item.rack_id && !item.shelf_id
-            ? (item.rack_name || '?')  // Rack item
-            : (item.shelf_name || '?'); // Shelf item
-          const loc = `${item.room_name || '?'}-${locName}`;
+            ? (item.rack_name || '')  // Rack item
+            : (item.shelf_name || ''); // Shelf item
+          const room = item.room_name || '';
+
+          let loc = '-';
+          if (room && locName) loc = `${room}-${locName}`;
+          else if (room) loc = `${room}`;
+          else if (locName) loc = `${locName}`;
+          else loc = 'Unassigned';
+
           locationMap[item.product_id].add(loc);
         });
       }

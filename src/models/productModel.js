@@ -355,6 +355,8 @@ class ProductModel extends BaseModel {
           "products.sku",
           "products.product_image",
           "products.category_id",
+          "products.mrp",
+          "products.discounted_price",
           "category.category_name as category_name",
           qb.raw(
             "(SELECT count(*) FROM items WHERE items.product_id = products.product_id AND items.status = 'available') as stock_quantity"
@@ -399,6 +401,8 @@ class ProductModel extends BaseModel {
           "products.product_image",
           "products.size", // Added size
           "products.category_id",
+          "products.mrp",
+          "products.discounted_price",
           "category.category_name as category_name",
           "product_codes.code as product_code",
           qb.raw(
@@ -437,6 +441,8 @@ class ProductModel extends BaseModel {
           qb.raw("NULL as product_image"), // Could pick one image, for now null
           qb.raw("SUM((SELECT count(*) FROM items WHERE items.product_id = products.product_id AND items.status = 'available'))::integer as stock_quantity"),
           qb.raw("COUNT(products.product_id)::integer as variant_count"),
+          qb.raw("MIN(products.mrp) as mrp"),
+          qb.raw("MIN(products.discounted_price) as discounted_price"),
           qb.raw("MIN(products.product_id) as single_id"),
           qb.raw("MIN(products.sku) as single_sku")
         ])
@@ -459,6 +465,8 @@ class ProductModel extends BaseModel {
           "products.product_image",
           qb.raw("(SELECT count(*) FROM items WHERE items.product_id = products.product_id AND items.status = 'available')::integer as stock_quantity"),
           qb.raw("1 as variant_count"),
+          "products.mrp",
+          "products.discounted_price",
           qb.raw("NULL::integer as single_id"),
           qb.raw("NULL::text as single_sku")
         ])
