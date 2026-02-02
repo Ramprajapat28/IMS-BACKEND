@@ -93,7 +93,8 @@ class ProductModel extends BaseModel {
           "category.category_name as category_name",
           "category.global_category_id as global_category_id",
           "gc.category_name as global_category_name",
-          "product_codes.code as product_code"
+          "product_codes.code as product_code",
+          qb.raw("(SELECT MAX(created_at) FROM items WHERE items.product_id = products.product_id AND items.is_deleted = false) as last_added_date")
         ])
         .leftJoin("category", "products.category_id", "category.category_id")
         .leftJoin("public.global_category as gc", "category.global_category_id", "gc.global_category_id")
@@ -143,6 +144,7 @@ class ProductModel extends BaseModel {
           "products.reorder_level",
           "category.category_name as category_name",
           "gc.category_name as global_category_name",
+          qb.raw("(SELECT MAX(created_at) FROM items WHERE items.product_id = products.product_id AND items.is_deleted = false) as last_added_date")
         ])
         .leftJoin("category", "products.category_id", "category.category_id")
         .leftJoin("public.global_category as gc", "category.global_category_id", "gc.global_category_id")
@@ -212,7 +214,8 @@ class ProductModel extends BaseModel {
             "category.category_name as category_name",
             "category.global_category_id as global_category_id",
             "gc.category_name as global_category_name",
-            "product_codes.code as product_code"
+            "product_codes.code as product_code",
+            qb.raw("(SELECT MAX(created_at) FROM items WHERE items.product_id = products.product_id AND items.is_deleted = false) as last_added_date")
           ])
           .leftJoin("category", "products.category_id", "category.category_id")
           .leftJoin("public.global_category as gc", "category.global_category_id", "gc.global_category_id")
