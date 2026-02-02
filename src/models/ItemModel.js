@@ -212,7 +212,7 @@ class ItemModel extends BaseModel {
       const isReturn = status === ITEM_STATUS.AVAILABLE || status === ITEM_STATUS.RETURNED;
       const isDeleted = !isReturn;
 
-      return qb("items")
+      const updatedItems = await qb("items")
         .whereIn("id", function () {
           const subQuery = this.select("id")
             .from("items")
@@ -240,7 +240,10 @@ class ItemModel extends BaseModel {
           shelf_id: isReturn ? (shelf_id || null) : qb.raw("shelf_id"), // Update location on return
           rack_id: isReturn ? (rack_id || null) : qb.raw("rack_id"),   // Update location on return
           updated_at: qb.raw("CURRENT_TIMESTAMP"),
-        });
+        })
+        .returning("id");
+
+      return updatedItems.map(item => item.id);
     } catch (e) {
       throw new DatabaseError(e);
     }
@@ -348,6 +351,16 @@ class ItemModel extends BaseModel {
           updated_at: qb.raw("CURRENT_TIMESTAMP"),
         });
 
+    } catch (e) {
+      throw new DatabaseError(e);
+    }
+  }
+  async linkItemsToOrder(itemIds, order_id) {
+    try {
+      const qb = await this.getQueryBuilder();
+      return await qb("items")
+        .whereIn("id", itemIds)
+        .update({ order_id });
     } catch (e) {
       throw new DatabaseError(e);
     }

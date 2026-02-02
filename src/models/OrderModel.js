@@ -51,7 +51,8 @@ class OrderModel extends BaseModel {
                 "rooms.room_name",
                 "rack_rooms.room_name as rack_room_name",
                 // Category columns
-                "category.category_name"
+                "category.category_name",
+                qb.raw("(SELECT json_agg(json_build_object('date', sub.date, 'count', sub.count)) FROM (SELECT items.created_at::date as date, count(*) as count FROM items WHERE items.order_id = orders.order_id GROUP BY items.created_at::date) sub) as inward_dates")
             ];
 
             let query = qb("orders")
@@ -168,7 +169,8 @@ class OrderModel extends BaseModel {
                 "rooms.room_name",
                 "rack_rooms.room_name as rack_room_name",
                 // Category columns
-                "category.category_name"
+                "category.category_name",
+                qb.raw("(SELECT json_agg(json_build_object('date', sub.date, 'count', sub.count)) FROM (SELECT items.created_at::date as date, count(*) as count FROM items WHERE items.order_id = orders.order_id GROUP BY items.created_at::date) sub) as inward_dates")
             ];
 
             const order = await qb("orders")

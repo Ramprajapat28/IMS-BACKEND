@@ -102,13 +102,15 @@ class itemManager {
       }
 
       // Remove/return stock
-      const affected = await itemModel.softDelete(
+      const affectedItemIds = await itemModel.softDelete(
         product_id,
         quantity,
         normalizedStatus,
         shelf_id,
         rack_id  // ✅ Pass rack_id to delete rack items
       );
+
+      const affected = affectedItemIds.length;
 
       if (isReturn && affected === 0) {
         throw new Error("No sold items found to return");
@@ -128,6 +130,11 @@ class itemManager {
 
         const createdOrder = await orderModel.create(orderData);
         createdOrderId = createdOrder.order_id;
+
+        // ✅ Link items to the newly created order
+        if (!isReturn) {
+          await itemModel.linkItemsToOrder(affectedItemIds, createdOrderId);
+        }
       }
 
       return {
