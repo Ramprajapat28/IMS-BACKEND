@@ -1,4 +1,4 @@
-const {PUBLIC_SCHEMA} = require("../utilities/MigrationUtilities");
+const {PUBLIC_SCHEMA} = require("../libs/dbConstants");
 /**
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
