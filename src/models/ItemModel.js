@@ -136,6 +136,42 @@ class ItemModel extends BaseModel {
     }
   }
 
+  async countSoldByProductId(product_id) {
+    try {
+      const qb = await this.getQueryBuilder();
+
+      const [{ count }] = await qb("items")
+        .where({
+          product_id,
+          is_deleted: true, // Sold items are soft-deleted
+          status: ITEM_STATUS.SOLD,
+        })
+        .count("* as count");
+
+      return Number(count);
+    } catch (e) {
+      throw new DatabaseError(e);
+    }
+  }
+
+  async countSoldByProductId(product_id) {
+    try {
+      const qb = await this.getQueryBuilder();
+
+      const [{ count }] = await qb("items")
+        .where({
+          product_id,
+          is_deleted: true, // Sold items are soft-deleted
+          status: ITEM_STATUS.SOLD,
+        })
+        .count("* as count");
+
+      return Number(count);
+    } catch (e) {
+      throw new DatabaseError(e);
+    }
+  }
+
   async updateItemStatus({ item_id, product_id, quantity = 1, status }) {
     try {
       const normalizedStatus = String(status).toLowerCase();
@@ -239,6 +275,7 @@ class ItemModel extends BaseModel {
           status,
           shelf_id: isReturn ? (shelf_id || null) : qb.raw("shelf_id"), // Update location on return
           rack_id: isReturn ? (rack_id || null) : qb.raw("rack_id"),   // Update location on return
+          created_at: isReturn ? qb.raw("CURRENT_TIMESTAMP") : qb.raw("created_at"), // Refresh timestamp on return
           updated_at: qb.raw("CURRENT_TIMESTAMP"),
         })
         .returning("id");

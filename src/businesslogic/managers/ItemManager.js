@@ -99,6 +99,12 @@ class itemManager {
         if (available < quantity) {
           throw new Error("Insufficient stock");
         }
+      } else {
+        // Check sold count for returns
+        const soldCount = await itemModel.countSoldByProductId(product_id);
+        if (soldCount < quantity) {
+          throw new Error("Input quantity is more than total items sold");
+        }
       }
 
       // Remove/return stock
@@ -131,10 +137,8 @@ class itemManager {
         const createdOrder = await orderModel.create(orderData);
         createdOrderId = createdOrder.order_id;
 
-        // ✅ Link items to the newly created order
-        if (!isReturn) {
-          await itemModel.linkItemsToOrder(affectedItemIds, createdOrderId);
-        }
+        // ✅ Link items to the newly created order (Always do this now to show inward dates)
+        await itemModel.linkItemsToOrder(affectedItemIds, createdOrderId);
       }
 
       return {
