@@ -68,12 +68,22 @@ class ProductModel extends BaseModel {
   /**
    * Get all products with pagination
    */
-  async findAllPaginated(page = 1, limit = 10) {
+  async findAllPaginated(page = 1, limit = 10, search = "") {
     try {
       const qb = await this.getQueryBuilder();
       const offset = (page - 1) * limit;
 
-      const data = await qb("products")
+      const applySearch = (query) => {
+        if (search) {
+          query.where(function () {
+            this.where("products.name", "ilike", `%${search}%`)
+              .orWhere("products.sku", "ilike", `%${search}%`)
+              .orWhere("product_codes.code", "ilike", `%${search}%`);
+          });
+        }
+      };
+
+      const query = qb("products")
         .select([
           "products.product_id",
           "products.name",
@@ -99,14 +109,22 @@ class ProductModel extends BaseModel {
         .leftJoin("category", "products.category_id", "category.category_id")
         .leftJoin("public.global_category as gc", "category.global_category_id", "gc.global_category_id")
         .leftJoin("product_codes", "products.product_code_id", "product_codes.id")
-        .where("products.is_deleted", false)
+        .where("products.is_deleted", false);
+
+      applySearch(query);
+
+      const data = await query
         .orderBy("products.product_id", "asc")
         .limit(limit)
         .offset(offset);
 
-      const [{ count }] = await qb("products")
-        .where("products.is_deleted", false)
-        .count("* as count");
+      const countQuery = qb("products")
+        .leftJoin("product_codes", "products.product_code_id", "product_codes.id")
+        .where("products.is_deleted", false);
+
+      applySearch(countQuery);
+
+      const [{ count }] = await countQuery.count("* as count");
 
       return {
         data: data.map(this.normalizeProduct),
@@ -425,7 +443,7 @@ class ProductModel extends BaseModel {
   /**
    * ✅ Get Inventory for a Category (Grouped by Code)
    */
-  async findCategoryInventory(category_id, page = 1, limit = 10) {
+  async findCategoryInventory(category_id, page = 1, limit = 10, search = "") {
     try {
       const qb = await this.getQueryBuilder();
       const offset = (page - 1) * limit;
@@ -454,6 +472,13 @@ class ProductModel extends BaseModel {
         })
         .groupBy("product_codes.id", "product_codes.name", "product_codes.code", "category.category_name");
 
+      if (search) {
+        groupedQuery.andWhere(function () {
+          this.where("product_codes.name", "ilike", `%${search}%`)
+            .orWhere("product_codes.code", "ilike", `%${search}%`);
+        });
+      }
+
       // 2. Standalone Products Query
       const standaloneQuery = qb("products")
         .select([
@@ -477,12 +502,17 @@ class ProductModel extends BaseModel {
         })
         .whereNull("products.product_code_id");
 
+      if (search) {
+        standaloneQuery.andWhere(function () {
+          this.where("products.name", "ilike", `%${search}%`)
+            .orWhere("products.sku", "ilike", `%${search}%`);
+        });
+      }
+
       // 3. Combine using Union
-      // Note: Knex union pagination is a bit manual or we use a wrapper query
-      const unionQuery = qb.union([groupedQuery, standaloneQuery], true); // true for Union All (though overlap shouldn't happen)
+      const unionQuery = qb.union([groupedQuery, standaloneQuery], true);
 
       // 4. Paginate the Union
-      // We need to wrap the union in a selection to order and limit
       const data = await qb.from(function () {
         this.from(unionQuery.as("combined_inventory"));
       })

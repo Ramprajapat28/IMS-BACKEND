@@ -83,7 +83,7 @@ class ProductManager {
             // Try to get the first validation detail
             const firstError = err.response.errors[0]?.body_error?.[0];
             if (firstError) {
-              errorMessage = `${firstError.key}: ${firstError.message}`;
+              errorMessage = `${firstError.key}: ${firstError.message} `;
             }
           }
 
@@ -106,14 +106,14 @@ class ProductManager {
       };
 
     } catch (err) {
-      throw new Error(`Bulk import failed: ${err.message}`);
+      throw new Error(`Bulk import failed: ${err.message} `);
     }
   }
 
 
-  static async getAllProductsPaginated(page, limit) {
+  static async getAllProductsPaginated(page, limit, search = "") {
     try {
-      const result = await productModel.findAllPaginated(page, limit);
+      const result = await productModel.findAllPaginated(page, limit, search);
 
       const totalPages = Math.ceil(result.total / limit);
       const offset = (page - 1) * limit;
@@ -131,7 +131,7 @@ class ProductManager {
         next: page < totalPages ? page + 1 : null
       };
     } catch (err) {
-      throw new Error(`Failed to fetch products: ${err.message}`);
+      throw new Error(`Failed to fetch products: ${err.message} `);
     }
   }
   // static async getAllProductsPaginated(page, limit) {
@@ -174,7 +174,7 @@ class ProductManager {
   //       next: page < totalPages ? page + 1 : null
   //     };
   //   } catch (err) {
-  //     throw new Error(`Failed to fetch products: ${err.message}`);
+  //     throw new Error(`Failed to fetch products: ${ err.message } `);
   //   }
   // }
 
@@ -226,7 +226,7 @@ class ProductManager {
         const status = item.status || "available";
 
         // Include rack_id in the key for proper grouping
-        const key = `${warehouseId}|${roomId}|${item.shelf_id}|${item.rack_id}|${status}`;
+        const key = `${warehouseId}| ${roomId}| ${item.shelf_id}| ${item.rack_id}| ${status} `;
 
         if (!stockMap.has(key)) {
           stockMap.set(key, {
@@ -257,7 +257,7 @@ class ProductManager {
         stock_details: stockBreakdown
       };
     } catch (err) {
-      throw new Error(`Failed to get product full details: ${err.message}`);
+      throw new Error(`Failed to get product full details: ${err.message} `);
     }
   }
 
@@ -282,7 +282,7 @@ class ProductManager {
         // stock_details: stockDetails || [] // Pass raw data to frontend
       };
     } catch (err) {
-      throw new Error(`Failed to get product by ID: ${err.message}`);
+      throw new Error(`Failed to get product by ID: ${err.message} `);
     }
   }
 
@@ -414,7 +414,7 @@ class ProductManager {
       const product = await productModel.update(id, value);
       return product || null;
     } catch (err) {
-      throw new Error(`Failed to update product: ${err.message}`);
+      throw new Error(`Failed to update product: ${err.message} `);
     }
   }
 
@@ -426,7 +426,7 @@ class ProductManager {
       const product = await productModel.softDelete(value.id);
       return product || null;
     } catch (err) {
-      throw new Error(`Failed to delete product: ${err.message}`);
+      throw new Error(`Failed to delete product: ${err.message} `);
     }
   }
 
@@ -440,7 +440,7 @@ class ProductManager {
     try {
       return await productModel.findBySkuId(sku);
     } catch (err) {
-      throw new Error(`Failed to find product by SKU: ${err.message}`);
+      throw new Error(`Failed to find product by SKU: ${err.message} `);
     }
   }
 
@@ -454,11 +454,11 @@ class ProductManager {
     try {
       return await productModel.generateBarcode(barcode);
     } catch (err) {
-      throw new DatabaseError(`Failed to find product by barcode: ${err.message}`);
+      throw new DatabaseError(`Failed to find product by barcode: ${err.message} `);
     }
   }
 
-  static async getProductsByCategoryWithStock(categoryName, page = 1, limit = 10) {
+  static async getProductsByCategoryWithStock(categoryName, page = 1, limit = 10, search = "") {
     try {
       const categoryModel = new CategoryModel(null);
       const category = await categoryModel.findByName(categoryName);
@@ -472,7 +472,8 @@ class ProductManager {
       const result = await productModel.findCategoryInventory(
         category.category_id,
         page,
-        limit
+        limit,
+        search
       );
 
       // Collect IDs for valid standalone products to fetch detailed location
@@ -504,9 +505,9 @@ class ProductManager {
           const room = item.room_name || '';
 
           let loc = '-';
-          if (room && locName) loc = `${room}-${locName}`;
-          else if (room) loc = `${room}`;
-          else if (locName) loc = `${locName}`;
+          if (room && locName) loc = `${room} -${locName} `;
+          else if (room) loc = `${room} `;
+          else if (locName) loc = `${locName} `;
           else loc = 'Unassigned';
 
           locationMap[item.product_id].add(loc);
@@ -528,7 +529,7 @@ class ProductManager {
         let location = "See Details";
 
         if (finalType === 'group') {
-          location = `Mixed (${p.variant_count} variants)`;
+          location = `Mixed(${p.variant_count} variants)`;
           // finalSku = "-----"; // Removed for navigation support
         } else {
           // It's a product (either originally or converted)
@@ -572,7 +573,7 @@ class ProductManager {
         next: page < totalPages ? page + 1 : null
       };
     } catch (err) {
-      throw new Error(`Failed to fetch category products with stock: ${err.message}`);
+      throw new Error(`Failed to fetch category products with stock: ${err.message} `);
     }
   }
 
@@ -613,9 +614,9 @@ class ProductManager {
           const room = item.room_name || '';
 
           let loc = '-';
-          if (room && locName) loc = `${room}-${locName}`;
-          else if (room) loc = `${room}`;
-          else if (locName) loc = `${locName}`;
+          if (room && locName) loc = `${room} -${locName} `;
+          else if (room) loc = `${room} `;
+          else if (locName) loc = `${locName} `;
           else loc = 'Unassigned';
 
           locationMap[item.product_id].add(loc);
@@ -643,7 +644,7 @@ class ProductManager {
       });
 
     } catch (err) {
-      throw new Error(`Failed to fetch products by code: ${err.message}`);
+      throw new Error(`Failed to fetch products by code: ${err.message} `);
     }
   }
 

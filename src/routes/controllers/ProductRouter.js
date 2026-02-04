@@ -19,7 +19,8 @@ router.get(
   appWrapper(async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 100;
-    const result = await ProductManager.getAllProductsPaginated(page, limit);
+    const search = req.query.search || "";
+    const result = await ProductManager.getAllProductsPaginated(page, limit, search);
     if (!result.products || result.products.length === 0) {
       // return res.status(404).json({
       //   success: false,
@@ -305,11 +306,13 @@ router.get(
     const { categoryName } = req.params;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || "";
 
     const result = await ProductManager.getProductsByCategoryWithStock(
       categoryName,
       page,
-      limit
+      limit,
+      search
     );
 
     if (!result.products || result.products.length === 0) {
