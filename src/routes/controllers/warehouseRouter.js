@@ -41,10 +41,7 @@ router.post(
     //   userId
     // );
 
-    return {
-      success: true,
-      data
-    };
+    
   }, [ACCESS_ROLES.ACCOUNT_ADMIN, ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 );
 
