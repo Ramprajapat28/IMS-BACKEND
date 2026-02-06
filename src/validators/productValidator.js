@@ -61,13 +61,23 @@ const createProductSchema = Joi.object({
     }),
   category: Joi.string()
     .trim()
-    .required()
+    .when('category_id', {
+      is: Joi.exist(),
+      then: Joi.optional(),
+      otherwise: Joi.required()
+    })
     .label("Category")
     .messages({
       "string.base": COMMON_MESSAGES.STRING_BASE,
       "string.empty": COMMON_MESSAGES.STRING_EMPTY,
-      "any.required": COMMON_MESSAGES.ANY_REQUIRED
+      "any.required": "Category name is required if Category ID is not provided"
     }),
+
+  category_id: Joi.number()
+    .integer()
+    .positive()
+    .optional()
+    .label("Category ID"),
   size: Joi.string()
     .trim()
     .allow("", null)

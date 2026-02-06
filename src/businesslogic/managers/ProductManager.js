@@ -26,21 +26,17 @@ class ProductManager {
     let failureCount = 0;
 
     try {
-      // Determine file type from URL
-      // Remove query params if any, then get extension
       const cleanUrl = fileKey.split('?')[0];
       const isExcel = cleanUrl.endsWith('.xlsx') || cleanUrl.endsWith('.xls');
 
       let rows = [];
 
       if (isExcel) {
-
         const response = await axios.get(fileKey, { responseType: "arraybuffer" });
         const workbook = xlsx.read(response.data, { type: "buffer" });
         const sheetName = workbook.SheetNames[0];
-        rows = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]); // Returns array of objects
+        rows = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
       } else {
-        // CSV Handling via Stream
         const response = await axios.get(fileKey, { responseType: "stream" });
         const stream = response.data.pipe(csv());
         for await (const row of stream) {
@@ -48,25 +44,50 @@ class ProductManager {
         }
       }
 
+      const categoryModel = new CategoryModel(null);
+
       // Process Rows (Common Logic)
       for (const row of rows) {
         try {
-          // Normalize Keys (lowercase, trim, remove BOM)
+          // Normalize Keys
           const cleanRow = {};
           Object.keys(row).forEach(k => {
-            const cleanKey = k.trim().replace(/^\uFEFF/, '').toLowerCase();
+            const cleanKey = k.trim().replace(/^\uFEFF/, '').toLowerCase().replace(/[\s%]/g, '_');
             cleanRow[cleanKey] = typeof row[k] === 'string' ? row[k].trim() : row[k];
           });
 
-          // Map Columns to Product Data
+          // 1. Resolve Category Hierarchy
+          const globalCategoryName = cleanRow.category;
+          const subCategoryName = cleanRow.sub_category;
+
+          if (!globalCategoryName || !subCategoryName) {
+            throw new Error(`Missing Category or Sub Category info in row: ${JSON.stringify(row)}`);
+          }
+
+          const globalCat = await categoryModel.findGlobalByName(globalCategoryName);
+          if (!globalCat) {
+            throw new Error(`Global Category '${globalCategoryName}' not found. Please create it first.`);
+          }
+
+          const subCat = await categoryModel.findByNameAndGlobal(subCategoryName, globalCat.global_category_id);
+          if (!subCat) {
+            throw new Error(`Sub Category '${subCategoryName}' not found under '${globalCategoryName}'. Please create it first.`);
+          }
+
+          // 2. Map Columns to Product Data
           const productData = {
             name: cleanRow.name,
-            sku: cleanRow.sku,
-            category: cleanRow.category,
+            sku: String(cleanRow.sku),
+            category_id: subCat.category_id,
             description: cleanRow.description || "",
-            size: cleanRow.size || "",
-            product_code: cleanRow.product_code || "",
-            product_image: cleanRow.image ? [{ file_path: cleanRow.image, view: "front" }] : []
+            size: String(cleanRow.size || ""),
+            product_code: String(cleanRow.product_code || ""),
+            mrp: Number(cleanRow.mrp || 0),
+            discounted_price: Number(cleanRow.discounted_price || 0),
+            gst_percentage: Number(cleanRow.gst_percentage || cleanRow.gst_ || 0),
+            cost_to_company: Number(cleanRow.cost_to_company || cleanRow.ctc || 0),
+            reorder_level: Number(cleanRow.reorder_level || 10),
+            product_image: cleanRow.image_url || cleanRow.image ? [{ file_path: cleanRow.image_url || cleanRow.image, view: "front" }] : []
           };
 
           // Reuse createProduct for validation & creation
@@ -76,14 +97,12 @@ class ProductManager {
 
         } catch (err) {
           failureCount++;
-
-          // Extract detailed validation message if available
           let errorMessage = err.message || "Unknown error";
+
           if (err.name === "JoiValidatorError" && err.response && err.response.errors) {
-            // Try to get the first validation detail
             const firstError = err.response.errors[0]?.body_error?.[0];
             if (firstError) {
-              errorMessage = `${firstError.key}: ${firstError.message} `;
+              errorMessage = `${firstError.key}: ${firstError.message}`;
             }
           }
 
@@ -91,7 +110,7 @@ class ProductManager {
             sku: row.sku || "UNKNOWN",
             error: errorMessage
           });
-          results.push({ sku: row.sku, status: "failed", reason: errorMessage });
+          results.push({ sku: row.sku || "UNKNOWN", status: "failed", reason: errorMessage });
         }
       }
 
@@ -106,7 +125,7 @@ class ProductManager {
       };
 
     } catch (err) {
-      throw new Error(`Bulk import failed: ${err.message} `);
+      throw new Error(`Bulk import failed: ${err.message}`);
     }
   }
 
@@ -301,19 +320,20 @@ class ProductManager {
         });
       }
 
-      const categoryModel = new CategoryModel(null);
-      const category = await categoryModel.findByName(value.category);
-      if (!category) {
-        throw new JoiValidatorError({
-          details: [
-            { path: ["category"], message: "Invalid category selected" }
-          ]
-        });
+      if (!value.category_id) {
+        const categoryModel = new CategoryModel(null);
+        const category = await categoryModel.findByName(value.category);
+        if (!category) {
+          throw new JoiValidatorError({
+            details: [
+              { path: ["category"], message: "Invalid category selected" }
+            ]
+          });
+        }
+        value.category_id = category.category_id;
       }
 
-      // 3️⃣ Mutate value safely
-      value.category_id = category.category_id;
-      delete value.category;
+      if ('category' in value) delete value.category;
 
       // Product Code Logic
       if (value.product_code) {
