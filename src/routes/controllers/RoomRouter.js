@@ -104,7 +104,7 @@ router.put(
 );
 
 
-router.delete(
+router.post(
   "/delete_room/:id",
   appWrapper(
     async (req, res) => {
@@ -119,7 +119,7 @@ router.delete(
         message: "Room deleted successfully"
       };
     },
-    [ACCESS_ROLES.ACCOUNT_ADMIN]
+    [ACCESS_ROLES.ACCOUNT_ADMIN, ACCESS_ROLES.ACCOUNT_SUPER_ADMIN]
   )
 );
 

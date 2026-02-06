@@ -44,7 +44,7 @@ router.post(
     success: true,
     shelf: await shelfManager.createShelf(req.body),
     message: "Shelf created successfully"
-  }), [ACCESS_ROLES.ALL])
+  }), [ACCESS_ROLES.ACCOUNT_ADMIN, ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 );
 
 router.get(
@@ -64,7 +64,7 @@ router.put(
     return shelf
       ? { success: true, updated_shelf: shelf, message: "Shelf updated successfully" }
       : { success: false, message: "Shelf not found or nothing to update" };
-  }, [ACCESS_ROLES.ALL])
+  }, [ACCESS_ROLES.ACCOUNT_ADMIN, ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 );
 
 router.post(

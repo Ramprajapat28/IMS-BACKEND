@@ -41,7 +41,7 @@ router.post(
     //   userId
     // );
 
-    
+
   }, [ACCESS_ROLES.ACCOUNT_ADMIN, ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 );
 
@@ -143,7 +143,7 @@ router.put(
 );
 
 // DELETE WAREHOUSE (soft delete)
-router.delete(
+router.post(
   "/delete/:id",
   appWrapper(async (req) => {
     const userId = req.locals?.user?.user_id

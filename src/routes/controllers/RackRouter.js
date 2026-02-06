@@ -23,7 +23,7 @@ router.get('/list',
             page: Number(page),
             limit: Number(limit)
         });
-    }, [ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
+    }, [ACCESS_ROLES.ACCOUNT_ADMIN, ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 );
 
 // Get rack by ID
@@ -36,7 +36,7 @@ router.get('/:id',
             success: true,
             data: rack
         });
-    }, [ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
+    }, [ACCESS_ROLES.ACCOUNT_ADMIN, ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 );
 
 // Create rack
@@ -49,7 +49,7 @@ router.post('/create',
             data: rack,
             message: "Rack created successfully"
         });
-    }, [ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
+    }, [ACCESS_ROLES.ACCOUNT_ADMIN, ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 );
 
 // Update rack
@@ -67,7 +67,7 @@ router.put('/:id',
 );
 
 // Delete rack (soft delete)
-router.delete('/:id',
+router.post('/delete/:id',
     appWrapper(async (req, res) => {
         const rackId = Number(req.params.id);
         const result = await RackManager.deleteRack(rackId);
@@ -76,7 +76,7 @@ router.delete('/:id',
             success: true,
             data: result
         });
-    }, [ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
+    }, [ACCESS_ROLES.ACCOUNT_ADMIN, ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 );
 
 module.exports = router;
