@@ -14,8 +14,8 @@ router.post(
     async (req, res) => {
       console.log("add item:", req.body);
 
-      const { quantity, shelf_id, rack_id, product_id } = req.body;
-      const item = await itemManager.createItem(product_id, shelf_id, quantity, rack_id);
+      const { quantity, shelf_id, rack_id, product_id, remark } = req.body;
+      const item = await itemManager.createItem({product_id, shelf_id, quantity, remark, rack_id});
       console.log("item", item);
       if (!item) {
         return res.status(404).json({

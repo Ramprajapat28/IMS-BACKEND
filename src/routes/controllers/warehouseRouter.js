@@ -143,7 +143,7 @@ router.put(
 );
 
 // DELETE WAREHOUSE (soft delete)
-router.post(
+router.delete(
   "/delete/:id",
   appWrapper(async (req) => {
     const userId = req.locals?.user?.user_id

@@ -9,56 +9,18 @@ class WarehouseModel extends BaseModel {
   async findWarehouseById(id) {
     const qb = await this.getQueryBuilder();
     return qb("warehouses")
+      .select(
+        "warehouse_id",
+        "name",
+        "location",
+        "contact_person",
+        "contact_number",
+        "created_at",
+        "updated_at"
+      )
       .where({ warehouse_id: id, is_deleted: false })
       .first();
-
   }
-
-  async findRoomById(id) {
-    const qb = await this.getQueryBuilder();
-    return qb("rooms")
-      .where({ room_id: id })
-      .first();
-  }
-
-  async findShelfById(id) {
-    const qb = await this.getQueryBuilder();
-    return qb("shelf")
-      .where({ shelf_id: id })
-      .first();
-  }
-
-  async getWarehouseDetailsByIds({ warehouse_id, room_id, shelf_id }) {
-    const qb = await this.getQueryBuilder();
-
-    let query = qb("warehouses as w")
-      .select(
-        "w.warehouse_id",
-        "w.name",
-        "r.room_id",
-        "r.room_name",
-        "s.shelf_id",
-        "s.shelf_name",
-        "s.capacity"
-      )
-      .leftJoin("rooms as r", "r.warehouse_id", "w.warehouse_id")
-      .leftJoin("shelf as s", "s.room_id", "r.room_id")
-      .where("w.warehouse_id", warehouse_id)
-      .where("w.is_deleted", false);
-
-    if (room_id) {
-      query.andWhere("r.room_id", room_id);
-    }
-
-    if (shelf_id) {
-      query.andWhere("s.shelf_id", shelf_id);
-    }
-
-    return query;
-  }
-
-
-
 
   async getAllWarehousesPaginated(page = 1, limit = 10) {
     try {
@@ -66,7 +28,15 @@ class WarehouseModel extends BaseModel {
       const offset = (page - 1) * limit;
 
       const warehouses = await qb("warehouses")
-        .select("*")
+        .select(
+          "warehouse_id",
+          "name",
+          "location",
+          "contact_person",
+          "contact_number",
+          "created_at",
+          "updated_at"
+        )
         .where("is_deleted", false)
         .orderBy("warehouse_id", "desc")
         .limit(limit)
@@ -88,17 +58,20 @@ class WarehouseModel extends BaseModel {
   async create(data) {
     try {
       const qb = await this.getQueryBuilder();
-      const [warehouse] = await qb('warehouses')
+
+      const [warehouse] = await qb("warehouses")
         .insert({
           name: data.name,
           location: data.location || null,
+          contact_person: data.contact_person || null,
+          contact_number: data.contact_number || null,
           created_by: this.userId,
           last_modified_by: this.userId,
           is_deleted: false,
           created_at: new Date(),
           updated_at: new Date()
         })
-        .returning('*');
+        .returning("*");
 
       return warehouse;
     } catch (e) {
@@ -109,6 +82,7 @@ class WarehouseModel extends BaseModel {
   async update(id, data) {
     try {
       const qb = await this.getQueryBuilder();
+
       const updateData = {
         updated_at: new Date(),
         last_modified_by: this.userId
@@ -116,14 +90,16 @@ class WarehouseModel extends BaseModel {
 
       if (data.name !== undefined) updateData.name = data.name;
       if (data.location !== undefined) updateData.location = data.location;
+      if (data.contact_person !== undefined) updateData.contact_person = data.contact_person;
+      if (data.contact_number !== undefined) updateData.contact_number = data.contact_number;
 
-      const [warehouse] = await qb('warehouses')
+      const [warehouse] = await qb("warehouses")
         .where({ warehouse_id: id, is_deleted: false })
         .update(updateData)
-        .returning('*');
+        .returning("*");
 
       if (!warehouse) {
-        throw new Error('Warehouse not found');
+        throw new Error("Warehouse not found");
       }
 
       return warehouse;
@@ -135,16 +111,17 @@ class WarehouseModel extends BaseModel {
   async softDelete(id) {
     try {
       const qb = await this.getQueryBuilder();
-      const [warehouse] = await qb('warehouses')
+
+      const [warehouse] = await qb("warehouses")
         .where({ warehouse_id: id })
         .update({
           is_deleted: true,
           updated_at: new Date()
         })
-        .returning('*');
+        .returning("*");
 
       if (!warehouse) {
-        throw new Error('Warehouse not found');
+        throw new Error("Warehouse not found");
       }
 
       return warehouse;

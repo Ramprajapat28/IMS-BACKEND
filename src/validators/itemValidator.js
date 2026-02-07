@@ -2,6 +2,11 @@ const Joi = require("joi");
 const  COMMON_MESSAGES  = require("../validators/validationConstants/commanMessages");
 
 const createItemSchema = Joi.object({
+  remark: Joi.string().allow("", null).optional().label("Remark").messages({
+      "string.base": COMMON_MESSAGES.STRING_BASE,
+      "string.empty": COMMON_MESSAGES.STRING_EMPTY,
+    }),
+
   product_id: Joi.number()
     .integer()
     .positive()

@@ -10,7 +10,7 @@ class ItemModel extends BaseModel {
 
 
   getPublicColumns() {
-    return ["id", "name", "shelf_id", "rack_id", "product_id", "status", "is_deleted"];
+    return ["id", "name", "shelf_id", "rack_id", "product_id", "status", "remark", "is_deleted"];
   }
 
   async findAllPaginated(filters = {}, page = 1, limit = 10) {
@@ -89,6 +89,7 @@ class ItemModel extends BaseModel {
         ...data,
         product_id,
         status: ITEM_STATUS.AVAILABLE,
+        remark: data.remark ?? null
       });
 
       const [item] = await qb("items")
@@ -154,25 +155,10 @@ class ItemModel extends BaseModel {
     }
   }
 
-  async countSoldByProductId(product_id) {
-    try {
-      const qb = await this.getQueryBuilder();
+ 
 
-      const [{ count }] = await qb("items")
-        .where({
-          product_id,
-          is_deleted: true, // Sold items are soft-deleted
-          status: ITEM_STATUS.SOLD,
-        })
-        .count("* as count");
+  async updateItemStatus({ item_id, product_id, quantity = 1, status, remark }) {
 
-      return Number(count);
-    } catch (e) {
-      throw new DatabaseError(e);
-    }
-  }
-
-  async updateItemStatus({ item_id, product_id, quantity = 1, status }) {
     try {
       const normalizedStatus = String(status).toLowerCase();
 
@@ -189,6 +175,7 @@ class ItemModel extends BaseModel {
         const [updated] = await qb("items")
           .where({ id: item_id })
           .update({
+            remark: remark ?? qb.raw("remark"),
             status: normalizedStatus,
             is_deleted: isDeleted,
             updated_at: qb.raw("CURRENT_TIMESTAMP"),
