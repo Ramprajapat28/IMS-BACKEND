@@ -218,4 +218,14 @@ router.get(
   })
 );
 
+// POST /items/transfer-stock - Transfer stock between locations
+router.post(
+  "/transfer-stock",
+  appWrapper(
+    async (req, res) => {
+      const result = await itemManager.transferStock(req.body);
+      return res.json(result);
+    }, [ACCESS_ROLES.ALL])
+);
+
 module.exports = router;

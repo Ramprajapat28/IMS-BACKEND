@@ -155,7 +155,7 @@ class ItemModel extends BaseModel {
     }
   }
 
- 
+
 
   async updateItemStatus({ item_id, product_id, quantity = 1, status, remark }) {
 
@@ -379,6 +379,43 @@ class ItemModel extends BaseModel {
       throw new DatabaseError(e);
     }
   }
+  async transferItems(product_id, quantity, source, destination) {
+    try {
+      const qb = await this.getQueryBuilder();
+
+      // 1. Find the IDs of the items to move
+      const itemsToMoveResult = await qb("items")
+        .select("id")
+        .where({
+          product_id,
+          shelf_id: source.shelf_id || null,
+          rack_id: source.rack_id || null,
+          is_deleted: false,
+          status: ITEM_STATUS.AVAILABLE
+        })
+        .limit(quantity);
+
+      const itemIds = itemsToMoveResult.map(row => row.id);
+
+      if (itemIds.length < quantity) {
+        throw new Error(`Insufficient items at source. Requested: ${quantity}, Available: ${itemIds.length}`);
+      }
+
+      // 2. Update their locations
+      await qb("items")
+        .whereIn("id", itemIds)
+        .update({
+          shelf_id: destination.shelf_id || null,
+          rack_id: destination.rack_id || null,
+          updated_at: qb.fn.now()
+        });
+
+      return itemIds;
+    } catch (e) {
+      throw new DatabaseError(e);
+    }
+  }
+
   async linkItemsToOrder(itemIds, order_id) {
     try {
       const qb = await this.getQueryBuilder();

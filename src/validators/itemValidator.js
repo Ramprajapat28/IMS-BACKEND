@@ -1,11 +1,11 @@
 const Joi = require("joi");
-const  COMMON_MESSAGES  = require("../validators/validationConstants/commanMessages");
+const COMMON_MESSAGES = require("../validators/validationConstants/commanMessages");
 
 const createItemSchema = Joi.object({
   remark: Joi.string().allow("", null).optional().label("Remark").messages({
-      "string.base": COMMON_MESSAGES.STRING_BASE,
-      "string.empty": COMMON_MESSAGES.STRING_EMPTY,
-    }),
+    "string.base": COMMON_MESSAGES.STRING_BASE,
+    "string.empty": COMMON_MESSAGES.STRING_EMPTY,
+  }),
 
   product_id: Joi.number()
     .integer()
@@ -108,8 +108,23 @@ const paginationSchema = Joi.object({
     })
 });
 
+const transferStockSchema = Joi.object({
+  product_id: Joi.number().integer().positive().required().label("Product ID"),
+  quantity: Joi.number().integer().positive().required().label("Quantity"),
+  source: Joi.object({
+    shelf_id: Joi.number().integer().positive().allow(null, ""),
+    rack_id: Joi.number().integer().positive().allow(null, "")
+  }).required().label("Source Location"),
+  destination: Joi.object({
+    shelf_id: Joi.number().integer().positive().allow(null, ""),
+    rack_id: Joi.number().integer().positive().allow(null, "")
+  }).required().label("Destination Location"),
+  remark: Joi.string().allow("", null).optional().label("Remark")
+});
+
 module.exports = {
   createItemSchema,
   removeStockSchema,
-  paginationSchema
+  paginationSchema,
+  transferStockSchema
 };

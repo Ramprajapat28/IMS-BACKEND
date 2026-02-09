@@ -9,6 +9,7 @@ const {
   createItemSchema,
   removeStockSchema,
   paginationSchema,
+  transferStockSchema,
 } = require("../../validators/itemValidator");
 
 class itemManager {
@@ -254,6 +255,51 @@ class itemManager {
 
     } catch (error) {
       throw new Error(`Failed to return stock: ${error.message}`);
+    }
+  }
+
+  static async transferStock(payload) {
+    const { error } = transferStockSchema.validate(payload);
+    if (error) {
+      throw new JoiValidatorError(error);
+    }
+
+    try {
+      const itemModel = new ItemModel();
+      const { product_id, quantity, source, destination } = payload;
+
+      // 1. Perform Transfer in items table
+      const affectedItemIds = await itemModel.transferItems(
+        product_id,
+        quantity,
+        source,
+        destination
+      );
+
+      // 2. Log movement
+      try {
+        const qb = await itemModel.getQueryBuilder();
+        await qb("stock_movements").insert({
+          product_id,
+          quantity,
+          source_type: source.shelf_id ? 'shelf' : 'rack',
+          source_id: source.shelf_id || source.rack_id,
+          dest_type: destination.shelf_id ? 'shelf' : 'rack',
+          dest_id: destination.shelf_id || destination.rack_id,
+          remark: payload.remark || 'Internal Transfer',
+          created_at: qb.fn.now()
+        });
+      } catch (logError) {
+        console.error("Failed to log stock movement:", logError.message);
+      }
+
+      return {
+        success: true,
+        affected: affectedItemIds.length,
+        message: `Successfully transferred ${affectedItemIds.length} item(s)`
+      };
+    } catch (error) {
+      throw new Error(`Failed to transfer stock: ${error.message}`);
     }
   }
 }

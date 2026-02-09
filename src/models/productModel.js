@@ -551,6 +551,7 @@ class ProductModel extends BaseModel {
         .select(qb.raw("'Added' as activity"))
         .select(qb.raw("COUNT(*)::integer as quantity"))
         .select(qb.raw("'Received' as status"))
+        .select(qb.raw("'New Stock Received' as remark"))
         .where({ product_id, is_deleted: false })
         .groupByRaw("DATE(created_at)");
 
@@ -559,10 +560,20 @@ class ProductModel extends BaseModel {
         .select(qb.raw("'Returned' as activity"))
         .select(qb.raw("SUM(quantity)::integer as quantity"))
         .select(qb.raw("'Restocked' as status"))
+        .select(qb.raw("'Order Return' as remark"))
         .where({ product_id, status: 'returned', is_deleted: false })
         .groupByRaw("DATE(created_at)");
 
-      const unionQuery = qb.unionAll([itemsQuery, ordersQuery], true);
+      const movementsQuery = qb("stock_movements")
+        .select(qb.raw("DATE(created_at) as date"))
+        .select(qb.raw("'Transferred' as activity"))
+        .select(qb.raw("SUM(quantity)::integer as quantity"))
+        .select(qb.raw("'Relocated' as status"))
+        .select(qb.raw("MAX(remark) as remark"))
+        .where({ product_id })
+        .groupByRaw("DATE(created_at)");
+
+      const unionQuery = qb.unionAll([itemsQuery, ordersQuery, movementsQuery], true);
 
       const data = await qb
         .from(unionQuery.as("combined_logs"))
