@@ -540,6 +540,55 @@ class ProductModel extends BaseModel {
       throw new DatabaseError(e);
     }
   }
+
+  async getStockLogsAggregated(product_id, page = 1, limit = 10) {
+    try {
+      const qb = await this.getQueryBuilder();
+      const offset = (page - 1) * limit;
+
+      const itemsQuery = qb("items")
+        .select(qb.raw("DATE(created_at) as date"))
+        .select(qb.raw("'Added' as activity"))
+        .select(qb.raw("COUNT(*)::integer as quantity"))
+        .select(qb.raw("'Received' as status"))
+        .where({ product_id, is_deleted: false })
+        .groupByRaw("DATE(created_at)");
+
+      const ordersQuery = qb("orders")
+        .select(qb.raw("DATE(created_at) as date"))
+        .select(qb.raw("'Returned' as activity"))
+        .select(qb.raw("SUM(quantity)::integer as quantity"))
+        .select(qb.raw("'Restocked' as status"))
+        .where({ product_id, status: 'returned', is_deleted: false })
+        .groupByRaw("DATE(created_at)");
+
+      const unionQuery = qb.unionAll([itemsQuery, ordersQuery], true);
+
+      const data = await qb
+        .from(unionQuery.as("combined_logs"))
+        .select("*")
+        .orderBy("date", "desc")
+        .limit(limit)
+        .offset(offset);
+
+      const countResult = await qb
+        .from(unionQuery.as("combined_count"))
+        .count("* as total");
+
+      const total = Number(countResult[0]?.total || 0);
+
+      return {
+        data: data.map((row, index) => ({
+          ...row,
+          id: `${row.activity.toLowerCase()}-${row.date instanceof Date ? row.date.toISOString().split('T')[0] : row.date}-${index}`,
+          date: row.date instanceof Date ? row.date.toISOString().split('T')[0] : row.date
+        })),
+        total
+      };
+    } catch (e) {
+      throw new DatabaseError(e);
+    }
+  }
 }
 
 module.exports = ProductModel;

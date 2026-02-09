@@ -256,7 +256,7 @@ class ProductManager {
             rack_id: item.rack_id,
             warehouse_name: warehouseName,
             room_name: roomName,
-            shelf_name: isRackItem ? item.rack_name : item.shelf_name,  // Use rack_name for rack items
+            shelf_name: item.shelf_name,
             rack_name: item.rack_name,
             location_name: locationName,  // The display name (shelf or rack)
             is_rack: isRackItem,
@@ -679,6 +679,15 @@ class ProductManager {
       // Return empty array instead of throwing to avoid blocking UI
       console.error("Search codes error:", err);
       return [];
+    }
+  }
+
+  static async getStockLogsAggregated(product_id, page, limit) {
+    try {
+      const result = await productModel.getStockLogsAggregated(product_id, page, limit);
+      return result;
+    } catch (error) {
+      throw new Error(`Failed to get stock logs: ${error.message}`);
     }
   }
 }

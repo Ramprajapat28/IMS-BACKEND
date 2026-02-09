@@ -373,4 +373,27 @@ router.get(
   }, [ACCESS_ROLES.ALL])
 );
 
+// Get aggregated stock logs for a product
+router.get(
+  "/stock-logs/:id",
+  appWrapper(async (req, res) => {
+    const { id } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    const result = await ProductManager.getStockLogsAggregated(id, page, limit);
+
+    return res.json({
+      success: true,
+      data: result.data,
+      pagination: {
+        total: result.total,
+        page,
+        limit,
+        totalPages: Math.ceil(result.total / limit)
+      }
+    });
+  }, [ACCESS_ROLES.ALL])
+);
+
 module.exports = router;
