@@ -8,7 +8,7 @@ const JoiValidatorError = require("../../errorhandlers/JoiValidationError");
 const {
   registerSchema,
   loginSchema
-} = require("../../validators/AuthValidator");
+} = require("../../validators/authValidator");
 
 class AuthenticationManager {
 
