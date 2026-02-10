@@ -91,7 +91,7 @@ router.post(
     }
 
     // 3️⃣ Create product
-    const product = await ProductManager.createProduct(productData);
+    const product = await ProductManager.createProduct(productData, res.locals.userInfo?.user?.user_id);
 
     return res.json({
       success: true,
@@ -114,7 +114,7 @@ router.post(
       return res.status(400).json({ success: false, message: "No file path provided" });
     }
 
-    const result = await ProductManager.bulkImport(file_path);
+    const result = await ProductManager.bulkImport(file_path, res.locals.userInfo?.user?.user_id);
 
     return res.json({
       success: true,
@@ -133,7 +133,7 @@ router.get(
   appWrapper(async (req, res) => {
     const { id } = req.params;
 
-    const product = await ProductManager.getProductById(id);
+    const product = await ProductManager.getProductById(id, res.locals.userInfo?.user?.user_id);
     if (!product) {
       return res.status(404).json({
         success: false,
@@ -175,7 +175,7 @@ router.put(
     }
 
     // 3️⃣ Update product
-    const updatedProduct = await ProductManager.updateProduct(id, updateData);
+    const updatedProduct = await ProductManager.updateProduct(id, updateData, res.locals.userInfo?.user?.user_id);
 
     if (!updatedProduct) {
       return res.status(404).json({ success: false, message: "Product not found" });
@@ -198,7 +198,7 @@ router.post(
   appWrapper(async (req, res) => {
     const { id } = req.params;
 
-    const result = await ProductManager.deleteProduct(id);
+    const result = await ProductManager.deleteProduct(id, res.locals.userInfo?.user?.user_id);
     if (!result) {
       return res.status(404).json({
         success: false,
@@ -219,7 +219,7 @@ router.get(
   appWrapper(async (req, res) => {
     const { sku } = req.params;
 
-    const product = await ProductManager.findBysku(sku);
+    const product = await ProductManager.findBysku(sku, res.locals.userInfo?.user?.user_id);
     if (!product) {
       return res.status(404).json({
         success: false,

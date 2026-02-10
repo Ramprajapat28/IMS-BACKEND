@@ -123,7 +123,7 @@ class RackModel extends BaseModel {
     async updateRack(id, data) {
         try {
             const qb = await this.getQueryBuilder();
-            const updateData = this.insertStatement(data);
+            const updateData = await this.updateStatement(data);
 
             const exists = await qb("racks")
                 .select("rack_id")

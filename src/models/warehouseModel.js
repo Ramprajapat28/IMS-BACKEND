@@ -59,18 +59,16 @@ class WarehouseModel extends BaseModel {
     try {
       const qb = await this.getQueryBuilder();
 
+      const insertData = this.insertStatement({
+        name: data.name,
+        location: data.location || null,
+        contact_person: data.contact_person || null,
+        contact_number: data.contact_number || null,
+        is_deleted: false,
+      });
+
       const [warehouse] = await qb("warehouses")
-        .insert({
-          name: data.name,
-          location: data.location || null,
-          contact_person: data.contact_person || null,
-          contact_number: data.contact_number || null,
-          created_by: this.userId,
-          last_modified_by: this.userId,
-          is_deleted: false,
-          created_at: new Date(),
-          updated_at: new Date()
-        })
+        .insert(insertData)
         .returning("*");
 
       return warehouse;
@@ -83,15 +81,12 @@ class WarehouseModel extends BaseModel {
     try {
       const qb = await this.getQueryBuilder();
 
-      const updateData = {
-        updated_at: new Date(),
-        last_modified_by: this.userId
-      };
-
-      if (data.name !== undefined) updateData.name = data.name;
-      if (data.location !== undefined) updateData.location = data.location;
-      if (data.contact_person !== undefined) updateData.contact_person = data.contact_person;
-      if (data.contact_number !== undefined) updateData.contact_number = data.contact_number;
+      const updateData = await this.updateStatement({
+        name: data.name,
+        location: data.location,
+        contact_person: data.contact_person,
+        contact_number: data.contact_number,
+      });
 
       const [warehouse] = await qb("warehouses")
         .where({ warehouse_id: id, is_deleted: false })

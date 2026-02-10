@@ -15,7 +15,14 @@ router.post(
       console.log("add item:", req.body);
 
       const { quantity, shelf_id, rack_id, product_id, remark } = req.body;
-      const item = await itemManager.createItem({ product_id, shelf_id, quantity, remark, rack_id });
+      const item = await itemManager.createItem({
+        product_id,
+        shelf_id,
+        quantity,
+        remark,
+        rack_id,
+        userId: res.locals.userInfo?.user?.user_id
+      });
       console.log("item", item);
       if (!item) {
         return res.status(404).json({
@@ -153,7 +160,7 @@ router.post(
     const updatedItem = await itemManager.updateItemStatus({
       item_id,
       status: normalizedStatus,
-    });
+    }, res.locals.userInfo?.user?.user_id);
 
     return res.json({
       success: true,
@@ -169,7 +176,7 @@ router.get(
   appWrapper(
     async (req, res) => {
       const { product_id } = req.params;
-      const count = await itemManager.getItemCount(product_id);
+      const count = await itemManager.getItemCount(product_id, res.locals.userInfo?.user?.user_id);
       console.log("Item count:", count);
       return res.json({
         success: true,
@@ -195,7 +202,7 @@ router.get(
       });
     }
 
-    const result = await itemManager.getItemsPaginated(product_id, page, limit);
+    const result = await itemManager.getItemsPaginated(product_id, page, limit, res.locals.userInfo?.user?.user_id);
 
     if (!result.items || result.items.length === 0) {
       return res.status(404).json({
@@ -225,7 +232,7 @@ router.post(
   "/transfer-stock",
   appWrapper(
     async (req, res) => {
-      const result = await itemManager.transferStock(req.body);
+      const result = await itemManager.transferStock(req.body, res.locals.userInfo?.user?.user_id);
       return res.json(result);
     }, [ACCESS_ROLES.ALL])
 );

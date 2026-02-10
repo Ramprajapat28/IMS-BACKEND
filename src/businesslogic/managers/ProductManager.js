@@ -15,11 +15,9 @@ const {
   updateProductSchema
 } = require("../../validators/productValidator");
 
-const productModel = new ProductModel(); // no userId for now
-
-
 class ProductManager {
-  static async bulkImport(fileKey) {
+
+  static async bulkImport(fileKey, userId = null) {
     const results = [];
     const errors = [];
     let successCount = 0;
@@ -44,7 +42,8 @@ class ProductManager {
         }
       }
 
-      const categoryModel = new CategoryModel(null);
+      const categoryModel = new CategoryModel(userId);
+      const productModel = new ProductModel(userId);
 
       // Process Rows (Common Logic)
       for (const row of rows) {
@@ -91,7 +90,7 @@ class ProductManager {
           };
 
           // Reuse createProduct for validation & creation
-          await ProductManager.createProduct(productData);
+          await ProductManager.createProduct(productData, userId);
           successCount++;
           results.push({ sku: productData.sku, status: "success" });
 
@@ -129,9 +128,138 @@ class ProductManager {
     }
   }
 
+  static async bulkAddStock(fileKey, userId = null) {
+    const results = [];
+    const errors = [];
+    let successCount = 0;
+    let failureCount = 0;
 
-  static async getAllProductsPaginated(page, limit, search = "") {
     try {
+      const cleanUrl = fileKey.split('?')[0];
+      const isExcel = cleanUrl.endsWith('.xlsx') || cleanUrl.endsWith('.xls');
+
+      let rows = [];
+
+      if (isExcel) {
+        const response = await axios.get(fileKey, { responseType: "arraybuffer" });
+        const workbook = xlsx.read(response.data, { type: "buffer" });
+        const sheetName = workbook.SheetNames[0];
+        rows = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+      } else {
+        const response = await axios.get(fileKey, { responseType: "stream" });
+        const stream = response.data.pipe(csv());
+        for await (const row of stream) {
+          rows.push(row);
+        }
+      }
+
+      const productModel = new ProductModel(userId);
+      const itemModel = new ItemModel(userId);
+
+      for (const row of rows) {
+        try {
+          const cleanRow = {};
+          Object.keys(row).forEach(k => {
+            const cleanKey = k.trim().replace(/^\uFEFF/, '').toLowerCase().replace(/[\s%]/g, '_');
+            cleanRow[cleanKey] = typeof row[k] === 'string' ? row[k].trim() : row[k];
+          });
+
+          const sku = String(cleanRow.sku);
+          const quantity = Number(cleanRow.quantity);
+          const warehouseName = cleanRow.warehouse;
+          const roomName = cleanRow.room;
+          const shelfName = cleanRow.shelf;
+          const rackName = cleanRow.rack;
+
+          if (!sku || !quantity || quantity <= 0) {
+            throw new Error(`Missing SKU or invalid quantity in row: ${JSON.stringify(row)}`);
+          }
+
+          const product = await productModel.findBySkuId(sku);
+          if (!product) {
+            throw new Error(`Product with SKU '${sku}' not found.`);
+          }
+
+          // Logic to resolve warehouse, room, shelf/rack IDs
+          // This part would involve querying your WarehouseModel, RoomModel, ShelfModel, RackModel
+          // For simplicity, let's assume we have functions to get these IDs
+          let warehouseId = null;
+          let roomId = null;
+          let shelfId = null;
+          let rackId = null;
+
+          // Example (you'd replace this with actual model calls)
+          // const warehouseModel = new WarehouseModel(userId);
+          // const roomModel = new RoomModel(userId);
+          // const shelfModel = new ShelfModel(userId);
+          // const rackModel = new RackModel(userId);
+
+          // if (warehouseName) {
+          //   const warehouse = await warehouseModel.findByName(warehouseName);
+          //   if (warehouse) warehouseId = warehouse.id;
+          // }
+          // if (warehouseId && roomName) {
+          //   const room = await roomModel.findByNameAndWarehouse(roomName, warehouseId);
+          //   if (room) roomId = room.id;
+          // }
+          // if (roomId && shelfName) {
+          //   const shelf = await shelfModel.findByNameAndRoom(shelfName, roomId);
+          //   if (shelf) shelfId = shelf.id;
+          // }
+          // if (roomId && rackName) {
+          //   const rack = await rackModel.findByNameAndRoom(rackName, roomId);
+          //   if (rack) rackId = rack.id;
+          // }
+
+          // If no specific location, items might go to a default or be unassigned
+          // For now, we'll just add them without specific location if not provided in CSV
+          const itemsToCreate = [];
+          for (let i = 0; i < quantity; i++) {
+            itemsToCreate.push({
+              product_id: product.product_id,
+              status: "available", // Default status
+              warehouse_id: warehouseId,
+              room_id: roomId,
+              shelf_id: shelfId,
+              rack_id: rackId,
+              // Add other item properties as needed
+            });
+          }
+
+          await itemModel.bulkCreate(itemsToCreate);
+          successCount++;
+          results.push({ sku: sku, quantity: quantity, status: "success" });
+
+        } catch (err) {
+          failureCount++;
+          let errorMessage = err.message || "Unknown error";
+          errors.push({
+            sku: row.sku || "UNKNOWN",
+            error: errorMessage
+          });
+          results.push({ sku: row.sku || "UNKNOWN", status: "failed", reason: errorMessage });
+        }
+      }
+
+      return {
+        success: true,
+        summary: {
+          total: successCount + failureCount,
+          success: successCount,
+          failed: failureCount
+        },
+        errors: errors
+      };
+
+    } catch (err) {
+      throw new Error(`Bulk add stock failed: ${err.message}`);
+    }
+  }
+
+
+  static async getAllProductsPaginated(page, limit, search = "", userId = null) {
+    try {
+      const productModel = new ProductModel(userId);
       const result = await productModel.findAllPaginated(page, limit, search);
 
       const totalPages = Math.ceil(result.total / limit);
@@ -198,17 +326,18 @@ class ProductManager {
   // }
 
 
-  static async getProductFullDetails(id) {
+  static async getProductFullDetails(id, userId = null) {
     const { error, value } = productIdSchema.validate(
       { id },
       { abortEarly: false }
     );
     if (error) throw new JoiValidatorError(error);
     try {
+      const productModel = new ProductModel(userId);
       const product = await productModel.findById(value.id);
       if (!product) return null;
 
-      const itemModel = new ItemModel();
+      const itemModel = new ItemModel(userId);
       // Fetch all items using the NEW method
       const items = await itemModel.getAllItemsByProductId(value.id);
 
@@ -283,11 +412,12 @@ class ProductManager {
 
 
 
-  static async getProductById(id) {
+  static async getProductById(id, userId = null) {
     const { error, value } = productIdSchema.validate({ id }, { abortEarly: false });
     if (error) throw new JoiValidatorError(error);
 
     try {
+      const productModel = new ProductModel(userId);
       const product = await productModel.findById(value.id);
       if (!product) return null;
 
@@ -305,7 +435,7 @@ class ProductManager {
     }
   }
 
-  static async createProduct(productData) {
+  static async createProduct(productData, userId = null) {
     const { error, value } = createProductSchema.validate(productData, {
       abortEarly: false,
       stripUnknown: true
@@ -313,6 +443,7 @@ class ProductManager {
     if (error) throw new JoiValidatorError(error);
 
     try {
+      const productModel = new ProductModel(userId);
       const verifyProduct = await productModel.findBySkuId(value.sku);
       if (verifyProduct) {
         throw new JoiValidatorError({
@@ -321,7 +452,7 @@ class ProductManager {
       }
 
       if (!value.category_id) {
-        const categoryModel = new CategoryModel(null);
+        const categoryModel = new CategoryModel(userId);
         const category = await categoryModel.findByName(value.category);
         if (!category) {
           throw new JoiValidatorError({
@@ -337,7 +468,7 @@ class ProductManager {
 
       // Product Code Logic
       if (value.product_code) {
-        const productCodeModel = new ProductCodeModel();
+        const productCodeModel = new ProductCodeModel(userId);
         let codeRecord = await productCodeModel.findByCode(value.product_code);
         if (!codeRecord) {
           codeRecord = await productCodeModel.create({
@@ -376,7 +507,7 @@ class ProductManager {
     }
   }
 
-  static async updateProduct(id, data) {
+  static async updateProduct(id, data, userId = null) {
     const idCheck = productIdSchema.validate({ id }, { abortEarly: false });
     if (idCheck.error) throw new JoiValidatorError(idCheck.error);
 
@@ -387,12 +518,13 @@ class ProductManager {
     if (error) throw new JoiValidatorError(error);
 
     try {
+      const productModel = new ProductModel(userId);
       const verifyProduct = await productModel.findById(id);
       if (!verifyProduct) return null;
 
 
       if (value.product_code) {
-        const productCodeModel = new ProductCodeModel();
+        const productCodeModel = new ProductCodeModel(userId);
         let codeRecord = await productCodeModel.findByCode(value.product_code);
         if (!codeRecord) {
           codeRecord = await productCodeModel.create({
@@ -438,11 +570,12 @@ class ProductManager {
     }
   }
 
-  static async deleteProduct(id) {
+  static async deleteProduct(id, userId = null) {
     const { error, value } = productIdSchema.validate({ id }, { abortEarly: false });
     if (error) throw new JoiValidatorError(error);
 
     try {
+      const productModel = new ProductModel(userId);
       const product = await productModel.softDelete(value.id);
       return product || null;
     } catch (err) {
@@ -450,7 +583,7 @@ class ProductManager {
     }
   }
 
-  static async findBysku(sku) {
+  static async findBysku(sku, userId = null) {
     if (!sku) {
       throw new JoiValidatorError({
         details: [{ path: ["sku"], message: "SKU is required" }]
@@ -458,13 +591,14 @@ class ProductManager {
     }
 
     try {
+      const productModel = new ProductModel(userId);
       return await productModel.findBySkuId(sku);
     } catch (err) {
       throw new Error(`Failed to find product by SKU: ${err.message} `);
     }
   }
 
-  static async generateBarcode(barcode) {
+  static async generateBarcode(barcode, userId = null) {
     if (!barcode) {
       throw new JoiValidatorError({
         details: [{ path: ["barcode"], message: "Barcode is required" }]
@@ -472,14 +606,16 @@ class ProductManager {
     }
 
     try {
+      const productModel = new ProductModel(userId);
       return await productModel.generateBarcode(barcode);
     } catch (err) {
       throw new DatabaseError(`Failed to find product by barcode: ${err.message} `);
     }
   }
 
-  static async getProductsByCategoryWithStock(categoryName, page = 1, limit = 10, search = "") {
+  static async getProductsByCategoryWithStock(categoryName, page = 1, limit = 10, search = "", userId = null) {
     try {
+      const productModel = new ProductModel(userId);
       const categoryModel = new CategoryModel(null);
       const category = await categoryModel.findByName(categoryName);
       if (!category) {
@@ -511,7 +647,7 @@ class ProductManager {
       let locationMap = {};
 
       if (productIdsToFetch.length > 0) {
-        const itemModel = new ItemModel();
+        const itemModel = new ItemModel(userId);
         const items = await itemModel.findByProductIds(productIdsToFetch);
 
         items.forEach(item => {
@@ -597,7 +733,7 @@ class ProductManager {
     }
   }
 
-  static async getProductsByCode(code) {
+  static async getProductsByCode(code, userId = null) {
     if (!code) {
       throw new JoiValidatorError({
         details: [{ path: ["code"], message: "Product Code is required" }]
@@ -605,7 +741,7 @@ class ProductManager {
     }
 
     try {
-      const productCodeModel = new ProductCodeModel();
+      const productCodeModel = new ProductCodeModel(userId);
       const codeRecord = await productCodeModel.findByCode(code);
 
       if (!codeRecord) {
@@ -613,6 +749,7 @@ class ProductManager {
         return [];
       }
 
+      const productModel = new ProductModel(userId);
       const products = await productModel.findByCodeIdWithStock(codeRecord.id);
 
       // --- Collect IDs to fetch location details ---
@@ -620,7 +757,7 @@ class ProductManager {
       let locationMap = {};
 
       if (productIds.length > 0) {
-        const itemModel = new ItemModel();
+        const itemModel = new ItemModel(userId);
         const items = await itemModel.findByProductIds(productIds);
 
         items.forEach(item => {
@@ -668,11 +805,11 @@ class ProductManager {
     }
   }
 
-  static async searchProductCodes(query) {
+  static async searchProductCodes(query, userId = null) {
     try {
       if (!query || query.length < 2) return []; // Minimum chars for search
 
-      const productCodeModel = new ProductCodeModel();
+      const productCodeModel = new ProductCodeModel(userId);
       const codes = await productCodeModel.searchCodes(query);
       return codes;
     } catch (err) {
@@ -682,8 +819,9 @@ class ProductManager {
     }
   }
 
-  static async getStockLogsAggregated(product_id, page, limit) {
+  static async getStockLogsAggregated(product_id, page, limit, userId = null) {
     try {
+      const productModel = new ProductModel(userId);
       const result = await productModel.getStockLogsAggregated(product_id, page, limit);
       return result;
     } catch (error) {

@@ -10,7 +10,7 @@ const { generatePresignedUploadUrl } = require("../../services/presignedUploadSe
 router.post("/createGlobal",
 
   appWrapper(async (req, res) => {
-    const globalCategory = await CategoryManager.createGlobalCategory(req.body);
+    const globalCategory = await CategoryManager.createGlobalCategory(req.body, res.locals.userInfo?.user?.user_id);
 
     return res.json({
       success: true,
@@ -59,7 +59,7 @@ router.post('/delete_global/:id',
 router.put('/update_global/:id',
   appWrapper(async (req, res) => {
     const globalCategoryId = Number(req.params.id);
-    const globalCategory = await CategoryManager.updateGlobalCategory(globalCategoryId, req.body);
+    const globalCategory = await CategoryManager.updateGlobalCategory(globalCategoryId, req.body, res.locals.userInfo?.user?.user_id);
 
     return res.json({
       success: true,
@@ -82,7 +82,7 @@ router.get('/list',
 
 router.post("/create",
   appWrapper(async (req, res) => {
-    const category = await CategoryManager.createCategory(req.body);
+    const category = await CategoryManager.createCategory(req.body, res.locals.userInfo?.user?.user_id);
 
 
     return res.json({
@@ -98,7 +98,7 @@ router.post("/create",
 router.put('/update/:id',
   appWrapper(async (req, res) => {
     const categoryId = Number(req.params.id);
-    const category = await CategoryManager.updateCategory(categoryId, req.body);
+    const category = await CategoryManager.updateCategory(categoryId, req.body, res.locals.userInfo?.user?.user_id);
 
     return res.json({
       success: true,
@@ -116,7 +116,7 @@ router.post(
 
       const result = await CategoryManager.deleteCategoryById(
         categoryId,
-        res.locals.user?.user_id
+        res.locals.userInfo?.user?.user_id
       );
 
       return res.status(200).json({
@@ -142,7 +142,7 @@ router.get(
 
     const products = await CategoryManager.getProductsByCategoryPaginated(
       categoryName,
-      res.locals.user?.user_id,
+      res.locals.userInfo?.user?.user_id,
       req.query.page,
       req.query.limit
     );
@@ -178,7 +178,7 @@ router.get(
 router.get(
   "/list",
   appWrapper(async (req, res) => {
-    const categories = await CategoryModel.findAll();
+    const categories = await CategoryManager.findAllCategories();
 
     if (!categories || categories.length === 0) {
       return res.status(404).json({

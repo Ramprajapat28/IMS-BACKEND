@@ -18,7 +18,7 @@ router.get(
         if (shelf_id) filters.shelf_id = parseInt(shelf_id);
         if (status) filters.status = status;
 
-        const result = await OrderManager.getOrdersPaginated(page, limit, filters);
+        const result = await OrderManager.getOrdersPaginated(page, limit, filters, res.locals.userInfo?.user?.user_id);
 
         if (!result.orders || result.orders.length === 0) {
             // return res.status(404).json({
@@ -63,7 +63,7 @@ router.get(
     appWrapper(async (req, res) => {
         const { order_id } = req.params;
 
-        const order = await OrderManager.getOrderById(parseInt(order_id));
+        const order = await OrderManager.getOrderById(parseInt(order_id), res.locals.userInfo?.user?.user_id);
 
         if (!order) {
             return res.status(404).json({
@@ -89,7 +89,8 @@ router.put(
 
         const updated = await OrderManager.updateOrderStatus(
             parseInt(order_id),
-            status
+            status,
+            res.locals.userInfo?.user?.user_id
         );
 
         if (!updated) {

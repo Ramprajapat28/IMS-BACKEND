@@ -13,10 +13,10 @@ const {
 } = require("../../validators/itemValidator");
 
 class itemManager {
-  static async createItem({ product_id, shelf_id, quantity, remark, rack_id = null }) {
+  static async createItem({ product_id, shelf_id, quantity, remark, rack_id = null, userId = null }) {
     try {
-      const itemModel = new ItemModel();
-      const productModel = new ProductModel();
+      const itemModel = new ItemModel(userId);
+      const productModel = new ProductModel(userId);
 
       console.log("payload", { product_id, shelf_id, rack_id, quantity, remark });
 
@@ -65,13 +65,13 @@ class itemManager {
     status = ITEM_STATUS.SOLD,
     order_id = null,
     shelf_id = null,
-    rack_id = null,  // 🆕 Can sell from racks too
+    rack_id = null,
     mode = ORDER_MODE.ONLINE,
     userId = null
   ) {
     try {
       const itemModel = new ItemModel(userId);
-      const orderModel = new OrderModel();
+      const orderModel = new OrderModel(userId);
 
       product_id = Number(product_id);
       quantity = Number(quantity);
@@ -116,7 +116,7 @@ class itemManager {
         quantity,
         normalizedStatus,
         shelf_id,
-        rack_id  // ✅ Pass rack_id to delete rack items
+        rack_id
       );
 
       const affected = affectedItemIds.length;
@@ -125,7 +125,6 @@ class itemManager {
         throw new Error("No sold items found to return");
       }
 
-      // ✅ Create order if affected > 0 (sales and returns)
       let createdOrderId = order_id;
       if (affected > 0 && !order_id) {
         const orderData = {
@@ -141,7 +140,7 @@ class itemManager {
         const createdOrder = await orderModel.create(orderData);
         createdOrderId = createdOrder.order_id;
 
-        // ✅ Link items to the newly created order (Always do this now to show inward dates)
+        // Link items to the newly created order
         await itemModel.linkItemsToOrder(affectedItemIds, createdOrderId);
       }
 
@@ -157,8 +156,7 @@ class itemManager {
     }
   }
 
-  static async updateItemStatus(payload) {
-
+  static async updateItemStatus(payload, userId = null) {
     if (!payload || typeof payload !== "object") {
       throw new Error("Invalid payload");
     }
@@ -167,27 +165,21 @@ class itemManager {
       throw new Error("Status is required");
     }
 
-    // Normalize ONLY for comparison
     const incomingStatus = String(payload.status).trim().toLowerCase();
-
     const allowedStatuses = Object.values(ITEM_STATUS);
 
     if (!allowedStatuses.includes(incomingStatus)) {
       throw new Error(`Invalid item status: ${payload.status}`);
     }
 
-    // ✅ Store enum value (not user input)
     payload.status = incomingStatus;
-
-    const itemModel = new ItemModel();
+    const itemModel = new ItemModel(userId);
     return await itemModel.updateItemStatus(payload);
   }
 
-
-
-  static async getItemCount(product_id) {
+  static async getItemCount(product_id, userId = null) {
     try {
-      const itemModel = new ItemModel();
+      const itemModel = new ItemModel(userId);
       const count = await itemModel.countByProductId(product_id);
       return count;
     } catch (error) {
@@ -195,9 +187,9 @@ class itemManager {
     }
   }
 
-  static async getItemsPaginated(product_id, page, limit) {
+  static async getItemsPaginated(product_id, page, limit, userId = null) {
     try {
-      const itemModel = new ItemModel();
+      const itemModel = new ItemModel(userId);
       const result = await itemModel.findAllPaginated({ product_id }, page, limit);
       const offset = (page - 1) * limit;
       const totalPages = Math.ceil(result.total / limit);
@@ -216,16 +208,16 @@ class itemManager {
       throw new Error(`Failed to get items: ${error.message}`);
     }
   }
+
   static async returnStock({ product_id, quantity, shelf_id, rack_id, userId = null }) {
     try {
       const itemModel = new ItemModel(userId);
-      const productModel = new ProductModel();
+      const productModel = new ProductModel(userId);
 
       if (!product_id || !quantity) {
         throw new Error("product_id and quantity are required");
       }
 
-      // Validate that either shelf_id OR rack_id is provided
       if (!shelf_id && !rack_id) {
         throw new Error("Either shelf_id or rack_id is required");
       }
@@ -233,21 +225,19 @@ class itemManager {
         throw new Error("Cannot specify both shelf_id and rack_id");
       }
 
-      // Verify product exists
       const product = await productModel.findById(product_id);
       if (!product) {
         throw new Error("Product not found");
       }
 
-      // Use removeItemStock with RETURNED status to perform the return
       const result = await this.removeItemStock(
         product_id,
         quantity,
-        ITEM_STATUS.AVAILABLE, // Status should be available after return
-        null,  // order_id
+        ITEM_STATUS.AVAILABLE,
+        null,
         shelf_id,
         rack_id,
-        ORDER_MODE.ONLINE, // default mode for returns if not specified
+        ORDER_MODE.ONLINE,
         userId
       );
 
@@ -256,20 +246,19 @@ class itemManager {
         affected: result.affected,
         message: `Successfully returned ${result.affected} item(s)`
       };
-
     } catch (error) {
       throw new Error(`Failed to return stock: ${error.message}`);
     }
   }
 
-  static async transferStock(payload) {
+  static async transferStock(payload, userId = null) {
     const { error } = transferStockSchema.validate(payload);
     if (error) {
       throw new JoiValidatorError(error);
     }
 
     try {
-      const itemModel = new ItemModel();
+      const itemModel = new ItemModel(userId);
       const { product_id, quantity, source, destination } = payload;
 
       // 1. Perform Transfer in items table
@@ -291,6 +280,7 @@ class itemManager {
           dest_type: destination.shelf_id ? 'shelf' : 'rack',
           dest_id: destination.shelf_id || destination.rack_id,
           remark: payload.remark || 'Internal Transfer',
+          created_by: userId,
           created_at: qb.fn.now()
         });
       } catch (logError) {

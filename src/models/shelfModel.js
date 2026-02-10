@@ -135,7 +135,7 @@ class ShelfModel extends BaseModel {
   async updateShelf(id, data) {
     try {
       const qb = await this.getQueryBuilder();
-      const updateData = this.insertStatement(data);
+      const updateData = await this.updateStatement(data);
 
       const exists = await qb("shelf")
         .select("shelf_id")

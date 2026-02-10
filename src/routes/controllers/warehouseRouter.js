@@ -5,36 +5,36 @@ const { ACCESS_ROLES } = require("../../businesslogic/accessmanagement/roleConst
 const WarehouseManager = require("../../businesslogic/managers/WarehouseManager");
 
 // GET WAREHOUSE → ROOMS → SHELVES
-router.post(
-  "/manage/by-ids",
-  appWrapper(async (req) => {
-    const userId = req.locals?.user?.user_id
-      || req._locals?.user?.user_id
-      || req.auth?.user_id;
+// router.post(
+//   "/manage/by-ids",
+//   appWrapper(async (req) => {
+//     const userId = req.locals?.user?.user_id
+//       || req._locals?.user?.user_id
+//       || req.auth?.user_id;
 
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+//     const page = parseInt(req.query.page) || 1;
+//     const limit = parseInt(req.query.limit) || 10;
 
-    const result = await WarehouseManager.getWarehouseDetailsByIds(
-      req.body,
-      userId,
-      page,
-      limit
-    );
+//     const result = await WarehouseManager.getWarehouseById(
+//       req.body,
+//       userId,
+//       page,
+//       limit
+//     );
 
-    return {
-      success: true,
-      data: result.data,
-      pagination: {
-        page: result.page,
-        limit: result.limit,
-        offset: result.offset,
-        total: result.total,
-        totalPages: result.totalPages,
-        previous: result.previous,
-        next: result.next
-      }
-    };
+//     return {
+//       success: true,
+//       data: result.data,
+//       pagination: {
+//         page: result.page,
+//         limit: result.limit,
+//         offset: result.offset,
+//         total: result.total,
+//         totalPages: result.totalPages,
+//         previous: result.previous,
+//         next: result.next
+//       }
+//     };
 
     // const data = await WarehouseManager.getWarehouseDetailsByIds(
     //   req.body,
@@ -42,16 +42,14 @@ router.post(
     // );
 
 
-  }, [ACCESS_ROLES.ACCOUNT_ADMIN, ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
-);
+//   }, [ACCESS_ROLES.ACCOUNT_ADMIN, ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
+// );
 
 // GET ALL WAREHOUSES
 router.get(
   "/get_all_warehouses",
-  appWrapper(async (req) => {
-    const userId = req.locals?.user?.user_id
-      || req._locals?.user?.user_id
-      || req.auth?.user_id;
+  appWrapper(async (req, res) => {
+    const userId = res.locals.userInfo?.user?.user_id;
 
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -80,10 +78,8 @@ router.get(
 // GET SINGLE WAREHOUSE BY ID
 router.get(
   "/:id",
-  appWrapper(async (req) => {
-    const userId = req.locals?.user?.user_id
-      || req._locals?.user?.user_id
-      || req.auth?.user_id;
+  appWrapper(async (req, res) => {
+    const userId = res.locals.userInfo?.user?.user_id;
 
     const { id } = req.params;
     const warehouse = await WarehouseManager.getWarehouseById(
@@ -101,10 +97,8 @@ router.get(
 // CREATE WAREHOUSE
 router.post(
   "/create",
-  appWrapper(async (req) => {
-    const userId = req.locals?.user?.user_id
-      || req._locals?.user?.user_id
-      || req.auth?.user_id;
+  appWrapper(async (req, res) => {
+    const userId = res.locals.userInfo?.user?.user_id;
 
     const warehouse = await WarehouseManager.createWarehouse(
       req.body,
@@ -122,10 +116,8 @@ router.post(
 // UPDATE WAREHOUSE
 router.put(
   "/update/:id",
-  appWrapper(async (req) => {
-    const userId = req.locals?.user?.user_id
-      || req._locals?.user?.user_id
-      || req.auth?.user_id;
+  appWrapper(async (req, res) => {
+    const userId = res.locals.userInfo?.user?.user_id;
 
     const { id } = req.params;
     const warehouse = await WarehouseManager.updateWarehouse(
@@ -145,10 +137,8 @@ router.put(
 // DELETE WAREHOUSE (soft delete)
 router.delete(
   "/delete/:id",
-  appWrapper(async (req) => {
-    const userId = req.locals?.user?.user_id
-      || req._locals?.user?.user_id
-      || req.auth?.user_id;
+  appWrapper(async (req, res) => {
+    const userId = res.locals.userInfo?.user?.user_id;
 
     const { id } = req.params;
     const warehouse = await WarehouseManager.deleteWarehouse(

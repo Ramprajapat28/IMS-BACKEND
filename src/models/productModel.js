@@ -547,31 +547,37 @@ class ProductModel extends BaseModel {
       const offset = (page - 1) * limit;
 
       const itemsQuery = qb("items")
-        .select(qb.raw("DATE(created_at) as date"))
+        .select(qb.raw("DATE(items.created_at) as date"))
         .select(qb.raw("'Added' as activity"))
         .select(qb.raw("COUNT(*)::integer as quantity"))
         .select(qb.raw("'Received' as status"))
         .select(qb.raw("'New Stock Received' as remark"))
-        .where({ product_id, is_deleted: false })
-        .groupByRaw("DATE(created_at)");
+        .select("users.name as user_name")
+        .leftJoin("users", "items.created_by", "users.user_id")
+        .where({ "items.product_id": product_id, "items.is_deleted": false })
+        .groupByRaw("DATE(items.created_at), users.name");
 
       const ordersQuery = qb("orders")
-        .select(qb.raw("DATE(created_at) as date"))
+        .select(qb.raw("DATE(orders.created_at) as date"))
         .select(qb.raw("'Returned' as activity"))
         .select(qb.raw("SUM(quantity)::integer as quantity"))
         .select(qb.raw("'Restocked' as status"))
         .select(qb.raw("'Order Return' as remark"))
-        .where({ product_id, status: 'returned', is_deleted: false })
-        .groupByRaw("DATE(created_at)");
+        .select("users.name as user_name")
+        .leftJoin("users", "orders.created_by", "users.user_id")
+        .where({ "orders.product_id": product_id, status: 'returned', "orders.is_deleted": false })
+        .groupByRaw("DATE(orders.created_at), users.name");
 
       const movementsQuery = qb("stock_movements")
-        .select(qb.raw("DATE(created_at) as date"))
+        .select(qb.raw("DATE(stock_movements.created_at) as date"))
         .select(qb.raw("'Transferred' as activity"))
         .select(qb.raw("SUM(quantity)::integer as quantity"))
         .select(qb.raw("'Relocated' as status"))
         .select(qb.raw("MAX(remark) as remark"))
-        .where({ product_id })
-        .groupByRaw("DATE(created_at)");
+        .select("users.name as user_name")
+        .leftJoin("users", "stock_movements.created_by", "users.user_id")
+        .where({ "stock_movements.product_id": product_id })
+        .groupByRaw("DATE(stock_movements.created_at), users.name");
 
       const unionQuery = qb.unionAll([itemsQuery, ordersQuery, movementsQuery], true);
 

@@ -27,7 +27,7 @@ class BaseModel {
 
         return {
             ...insertObj,
-           
+            [TABLE_DEFAULTS.COLUMNS.CREATED_BY.KEY]: userId
         };
     }
 
@@ -43,7 +43,7 @@ class BaseModel {
      */
     async updateStatement(updateObj) {
         const userId = this.getUserId();
-        const queryBuilder = await this.getQueryBuilder();
+        // const queryBuilder = await this.getQueryBuilder();
 
         if (!userId) {
             return updateObj;
@@ -51,7 +51,7 @@ class BaseModel {
 
         return {
             ...updateObj,
-           
+            [TABLE_DEFAULTS.COLUMNS.LAST_MODIFIED_BY.KEY]: userId
         };
     }
 
@@ -80,7 +80,7 @@ class BaseModel {
         return definedObject;
     }
 
-    
+
 }
 
 module.exports = BaseModel;

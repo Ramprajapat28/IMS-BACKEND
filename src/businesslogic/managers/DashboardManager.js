@@ -48,8 +48,8 @@ class DashboardManager {
       .limit(limit);
   }
 
-  static async totalProducts() {
-    const productModel = new ProductModel();
+  static async totalProducts(userId = null) {
+    const productModel = new ProductModel(userId);
     const totalProducts = await productModel.countTotalProducts();
 
     return {
@@ -57,8 +57,8 @@ class DashboardManager {
     };
   }
 
-  static async totalOrder() {
-    const orderModel = new OrderModel();
+  static async totalOrder(userId = null) {
+    const orderModel = new OrderModel(userId);
     const totalOrder = await orderModel.totalOrder();
 
     return {
@@ -111,8 +111,8 @@ class DashboardManager {
   //     out_of_stock_products: outOfStockCount
   //   };
   // }
-  static async getDetailOfLowAndOutOfStock(lowStockLimit = 10) {
-    const itemModel = new ItemModel();
+  static async getDetailOfLowAndOutOfStock(lowStockLimit = 10, userId = null) {
+    const itemModel = new ItemModel(userId);
 
     const groupedItems = await itemModel.countAvailableItemsByProduct();
 
@@ -153,8 +153,8 @@ class DashboardManager {
     };
   }
 
-  static async getProductCountByCategory() {
-    const categoryModel = new CategoryModel();
+  static async getProductCountByCategory(userId = null) {
+    const categoryModel = new CategoryModel(userId);
     const data = await categoryModel.countProductsByCategory();
 
     // Normalize PostgreSQL count (string → number)

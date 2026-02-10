@@ -77,11 +77,13 @@ class RoomModel extends BaseModel {
       return json({ message: "Room already exists in this warehouse" });
     }
 
+    const insertData = this.insertStatement({
+      room_name: roomData.room_name,
+      warehouse_id: roomData.warehouse_id
+    });
+
     const [room] = await qb("rooms")
-      .insert({
-        room_name: roomData.room_name,
-        warehouse_id: roomData.warehouse_id
-      })
+      .insert(insertData)
       .returning(this.getBasicColumns());
 
     return room;
@@ -92,13 +94,11 @@ class RoomModel extends BaseModel {
   async updateRoom(room_id, roomData) {
     try {
       const qb = await this.getQueryBuilder();
+      const updateData = await this.updateStatement(roomData);
 
       const [room] = await qb("rooms")
         .where({ room_id })
-        .update({
-          ...roomData,
-          [TABLE_DEFAULTS.COLUMNS.UPDATED_AT.KEY]: qb.raw("CURRENT_TIMESTAMP")
-        })
+        .update(updateData)
         .returning(this.getBasicColumns());
 
       return room || null;

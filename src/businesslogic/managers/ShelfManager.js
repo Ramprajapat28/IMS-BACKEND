@@ -33,11 +33,11 @@ class ShelfManager {
     return value;
   }
 
-  static async getAllShelfPaginated(page, limit) {
+  static async getAllShelfPaginated(page, limit, userId = null) {
     try {
-      const shelfModel = new ShelfModel();
+      const shelfModel = new ShelfModel(userId);
 
-      
+
       const result = await shelfModel.getAllShelfPaginated({}, page, limit);
 
       const totalPages = Math.ceil(result.total / limit);
@@ -58,11 +58,11 @@ class ShelfManager {
     }
   }
 
-  static async createShelf(payload) {
+  static async createShelf(payload, userId = null) {
     const data = this.validate(shelfSchema.create, payload);
 
     // Business rule: room must exist and not be deleted
-    const roomModel = new RoomModel();
+    const roomModel = new RoomModel(userId);
     const room = await roomModel.getRoomById(data.room_id);
 
     if (!room) {
@@ -76,29 +76,29 @@ class ShelfManager {
       });
     }
 
-    const shelfModel = new ShelfModel();
+    const shelfModel = new ShelfModel(userId);
     return await shelfModel.createShelf(data);
   }
 
-  static async getShelfById(params) {
+  static async getShelfById(params, userId = null) {
     const { id } = this.validate(shelfSchema.id, params);
 
-    const shelfModel = new ShelfModel();
+    const shelfModel = new ShelfModel(userId);
     return await shelfModel.getShelfById(id);
   }
 
-  static async updateShelf(params, body) {
+  static async updateShelf(params, body, userId = null) {
     const { id } = this.validate(shelfSchema.id, params);
     const updateBody = this.validate(shelfSchema.update, body);
 
-    const shelfModel = new ShelfModel();
+    const shelfModel = new ShelfModel(userId);
     return await shelfModel.updateShelf(id, updateBody);
   }
 
-  static async deleteShelf(params) {
+  static async deleteShelf(params, userId = null) {
     const { id } = this.validate(shelfSchema.id, params);
 
-    const shelfModel = new ShelfModel();
+    const shelfModel = new ShelfModel(userId);
     return await shelfModel.deleteShelf(id);
   }
 }

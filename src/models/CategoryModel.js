@@ -62,9 +62,10 @@ class CategoryModel extends BaseModel {
   async createGlobal(categoryData) {
     try {
       const qb = await this.getQueryBuilder();
+      const insertData = this.insertStatement(categoryData);
       const [category] = await qb
         .from(`${PUBLIC_SCHEMA}.global_category`)
-        .insert(categoryData)
+        .insert(insertData)
         .returning(["global_category_id", "category_name", "logo_url"]);
 
       return category;
@@ -76,10 +77,11 @@ class CategoryModel extends BaseModel {
   async updateGlobal(global_category_id, categoryData) {
     try {
       const qb = await this.getQueryBuilder();
+      const updateData = await this.updateStatement(categoryData);
       const [category] = await qb
         .from(`${PUBLIC_SCHEMA}.global_category`)
         .where({ global_category_id })
-        .update(categoryData)
+        .update(updateData)
         .returning(["global_category_id", "category_name", "logo_url"]);
 
       return category;
@@ -151,9 +153,10 @@ class CategoryModel extends BaseModel {
   async create(categoryData) {
     try {
       const qb = await this.getQueryBuilder();
+      const insertData = this.insertStatement(categoryData);
       const [category] = await qb
         .from("category")
-        .insert(categoryData)
+        .insert(insertData)
         .returning(["category_id", "category_name", "logo_url", "sizes"]);
 
       return this.normalizeCategory(category);
@@ -165,10 +168,11 @@ class CategoryModel extends BaseModel {
   async update(category_id, categoryData) {
     try {
       const qb = await this.getQueryBuilder();
+      const updateData = await this.updateStatement(categoryData);
       const [category] = await qb
         .from("category")
         .where({ category_id })
-        .update(categoryData)
+        .update(updateData)
         .returning(["category_id", "category_name", "logo_url", "sizes"]);
 
       return this.normalizeCategory(category);

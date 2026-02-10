@@ -23,21 +23,21 @@ const rackIdSchema = Joi.object({
 });
 
 class RackManager {
-    static async getAllRacks(filters = {}, page = 1, limit = 10) {
+    static async getAllRacks(filters = {}, page = 1, limit = 10, userId = null) {
         try {
-            const rackModel = new RackModel(null);
+            const rackModel = new RackModel(userId);
             return await rackModel.getAllRackPaginated(filters, page, limit);
         } catch (err) {
             throw new Error(`Failed to fetch racks: ${err.message}`);
         }
     }
 
-    static async getRackById(rackId) {
+    static async getRackById(rackId, userId = null) {
         const { error, value } = rackIdSchema.validate({ rack_id: rackId });
         if (error) throw new JoiValidatorError(error);
 
         try {
-            const rackModel = new RackModel(null);
+            const rackModel = new RackModel(userId);
             const rack = await rackModel.getRackById(value.rack_id);
 
             if (!rack) {
@@ -50,7 +50,7 @@ class RackManager {
         }
     }
 
-    static async createRack(payload) {
+    static async createRack(payload, userId = null) {
         const { error, value } = createRackSchema.validate(payload, {
             abortEarly: false,
             stripUnknown: true
@@ -59,14 +59,14 @@ class RackManager {
         if (error) throw new JoiValidatorError(error);
 
         try {
-            const rackModel = new RackModel(null);
+            const rackModel = new RackModel(userId);
             return await rackModel.createRack(value);
         } catch (err) {
             throw new Error(`Failed to create rack: ${err.message}`);
         }
     }
 
-    static async updateRack(rackId, payload) {
+    static async updateRack(rackId, payload, userId = null) {
         const idCheck = rackIdSchema.validate({ rack_id: rackId });
         if (idCheck.error) throw new JoiValidatorError(idCheck.error);
 
@@ -78,7 +78,7 @@ class RackManager {
         if (error) throw new JoiValidatorError(error);
 
         try {
-            const rackModel = new RackModel(null);
+            const rackModel = new RackModel(userId);
             const rack = await rackModel.updateRack(rackId, value);
 
             if (!rack) {
@@ -91,12 +91,12 @@ class RackManager {
         }
     }
 
-    static async deleteRack(rackId) {
+    static async deleteRack(rackId, userId = null) {
         const { error, value } = rackIdSchema.validate({ rack_id: rackId });
         if (error) throw new JoiValidatorError(error);
 
         try {
-            const rackModel = new RackModel(null);
+            const rackModel = new RackModel(userId);
             const rack = await rackModel.deleteRack(value.rack_id);
 
             if (!rack) {

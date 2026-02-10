@@ -46,7 +46,7 @@ class CategoryManager {
     }
   }
 
-  static async createGlobalCategory(payload) {
+  static async createGlobalCategory(payload, userId = null) {
     const { error, value } = createGlobalCategorySchema.validate(payload, {
       abortEarly: false,
       stripUnknown: true
@@ -56,7 +56,7 @@ class CategoryManager {
       throw new JoiValidatorError(error);
 
     }
-    const categoryModel = new CategoryModel(null);
+    const categoryModel = new CategoryModel(userId);
     const existingCategory = await categoryModel.findGlobalByName(value.category_name);
 
     if (existingCategory) {
@@ -72,9 +72,9 @@ class CategoryManager {
     );
   }
 
-  static async updateGlobalCategory(globalCategoryId, payload) {
+  static async updateGlobalCategory(globalCategoryId, payload, userId = null) {
     // Simple implementation for now, could use full validation if needed
-    const categoryModel = new CategoryModel(null);
+    const categoryModel = new CategoryModel(userId);
     return categoryModel.updateGlobal(globalCategoryId, {
       category_name: payload.category_name,
       logo_url: payload.logo_url
@@ -92,7 +92,7 @@ class CategoryManager {
     return categoryModel.findAll();
   }
 
-  static async createCategory(payload) {
+  static async createCategory(payload, userId = null) {
     const { error, value } = createCategorySchema.validate(payload, {
       abortEarly: false,
       stripUnknown: true
@@ -105,7 +105,7 @@ class CategoryManager {
     // 1️⃣ Check if global category exists
     console.log("Validated payload value:", value);
     console.log("global_category_id:", value.global_category_id);
-    const categoryModel = new CategoryModel(null);
+    const categoryModel = new CategoryModel(userId);
     const globalCategory =
       await categoryModel.findGlobalById(value.global_category_id);
 
@@ -135,7 +135,7 @@ class CategoryManager {
     });
   }
 
-  static async updateCategory(categoryId, payload) {
+  static async updateCategory(categoryId, payload, userId = null) {
     const { error, value } = createCategorySchema.validate(payload, {
       abortEarly: false,
       stripUnknown: true
@@ -145,7 +145,7 @@ class CategoryManager {
       throw new JoiValidatorError(error);
     }
 
-    const categoryModel = new CategoryModel(null);
+    const categoryModel = new CategoryModel(userId);
     return categoryModel.update(categoryId, {
       category_name: value.category_name,
       global_category_id: value.global_category_id,

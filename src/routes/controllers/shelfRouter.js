@@ -12,7 +12,7 @@ router.get(
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
 
-    const result = await shelfManager.getAllShelfPaginated(page, limit);
+    const result = await shelfManager.getAllShelfPaginated(page, limit, res.locals.userInfo?.user?.user_id);
 
     // if (!result.shelfs || result.shelfs.length === 0) {
     //   return res.status(404).json({
@@ -40,17 +40,17 @@ router.get(
 
 router.post(
   "/create_shelf",
-  appWrapper(async (req) => ({
+  appWrapper(async (req, res) => ({
     success: true,
-    shelf: await shelfManager.createShelf(req.body),
+    shelf: await shelfManager.createShelf(req.body, res.locals.userInfo?.user?.user_id),
     message: "Shelf created successfully"
   }), [ACCESS_ROLES.ACCOUNT_ADMIN, ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 );
 
 router.get(
   "/get_shelf/:id",
-  appWrapper(async (req) => {
-    const shelf = await shelfManager.getShelfById(req.params);
+  appWrapper(async (req, res) => {
+    const shelf = await shelfManager.getShelfById(req.params, res.locals.userInfo?.user?.user_id);
     return shelf
       ? { success: true, shelf: shelf }
       : { success: false, message: "Shelf not found or already deleted" };
@@ -59,8 +59,8 @@ router.get(
 
 router.put(
   "/update_shelf/:id",
-  appWrapper(async (req) => {
-    const shelf = await shelfManager.updateShelf(req.params, req.body);
+  appWrapper(async (req, res) => {
+    const shelf = await shelfManager.updateShelf(req.params, req.body, res.locals.userInfo?.user?.user_id);
     return shelf
       ? { success: true, updated_shelf: shelf, message: "Shelf updated successfully" }
       : { success: false, message: "Shelf not found or nothing to update" };
@@ -69,8 +69,8 @@ router.put(
 
 router.post(
   "/delete_shelf/:id",
-  appWrapper(async (req) => {
-    const deleted = await shelfManager.deleteShelf(req.params);
+  appWrapper(async (req, res) => {
+    const deleted = await shelfManager.deleteShelf(req.params, res.locals.userInfo?.user?.user_id);
     return deleted
       ? { success: true, deleted_shelf: deleted, message: "Shelf deleted successfully" }
       : { success: false, message: "Shelf not found or already deleted" };

@@ -36,7 +36,7 @@ class OrderManager {
         }
     }
 
-    static async updateOrderStatus(order_id, status) {
+    static async updateOrderStatus(order_id, status, userId = null) {
         const { error, value } = updateStatusSchema.validate(
             { order_id, status },
             { abortEarly: false, stripUnknown: true }
@@ -45,7 +45,7 @@ class OrderManager {
         if (error) throw new JoiValidatorError(error);
 
         try {
-            const orderModel = new OrderModel();
+            const orderModel = new OrderModel(userId);
 
             const existingOrder = await orderModel.findById(value.order_id);
             if (!existingOrder) {
@@ -60,13 +60,13 @@ class OrderManager {
         }
     }
 
-    static async getOrderById(order_id) {
+    static async getOrderById(order_id, userId = null) {
         if (!order_id || isNaN(order_id)) {
             throw new Error("Invalid order ID");
         }
 
         try {
-            const orderModel = new OrderModel();
+            const orderModel = new OrderModel(userId);
             const order = await orderModel.findById(parseInt(order_id));
             return order;
         } catch (error) {
@@ -74,7 +74,7 @@ class OrderManager {
         }
     }
 
-    static async getOrdersPaginated(page, limit, filters = {}) {
+    static async getOrdersPaginated(page, limit, filters = {}, userId = null) {
         const { error, value } = paginationSchema.validate(
             { page, limit, ...filters },
             { abortEarly: false, stripUnknown: true }
@@ -83,7 +83,7 @@ class OrderManager {
         if (error) throw new JoiValidatorError(error);
 
         try {
-            const orderModel = new OrderModel();
+            const orderModel = new OrderModel(userId);
 
             const result = await orderModel.findAllPaginated(
                 {

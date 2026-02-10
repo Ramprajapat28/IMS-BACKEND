@@ -14,7 +14,7 @@ router.get('/list',
         if (room_id) filters.room_id = Number(room_id);
         if (rack_name) filters.rack_name = rack_name;
 
-        const result = await RackManager.getAllRacks(filters, Number(page), Number(limit));
+        const result = await RackManager.getAllRacks(filters, Number(page), Number(limit), res.locals.userInfo?.user?.user_id);
 
         return res.json({
             success: true,
@@ -30,7 +30,7 @@ router.get('/list',
 router.get('/:id',
     appWrapper(async (req, res) => {
         const rackId = Number(req.params.id);
-        const rack = await RackManager.getRackById(rackId);
+        const rack = await RackManager.getRackById(rackId, res.locals.userInfo?.user?.user_id);
 
         return res.json({
             success: true,
@@ -42,7 +42,7 @@ router.get('/:id',
 // Create rack
 router.post('/create',
     appWrapper(async (req, res) => {
-        const rack = await RackManager.createRack(req.body);
+        const rack = await RackManager.createRack(req.body, res.locals.userInfo?.user?.user_id);
 
         return res.json({
             success: true,
@@ -56,7 +56,7 @@ router.post('/create',
 router.put('/:id',
     appWrapper(async (req, res) => {
         const rackId = Number(req.params.id);
-        const rack = await RackManager.updateRack(rackId, req.body);
+        const rack = await RackManager.updateRack(rackId, req.body, res.locals.userInfo?.user?.user_id);
 
         return res.json({
             success: true,
@@ -70,7 +70,7 @@ router.put('/:id',
 router.post('/delete/:id',
     appWrapper(async (req, res) => {
         const rackId = Number(req.params.id);
-        const result = await RackManager.deleteRack(rackId);
+        const result = await RackManager.deleteRack(rackId, res.locals.userInfo?.user?.user_id);
 
         return res.json({
             success: true,
