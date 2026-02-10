@@ -1,4 +1,4 @@
-const WarehouseModel = require("../../models/WarehouseModel");
+const WarehouseModel = require("../../models/warehouseModel");
 const ValidationError = require("../../errorhandlers/ValidationError");
 
 class WarehouseManager {
