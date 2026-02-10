@@ -27,7 +27,8 @@ class ProductModel extends BaseModel {
       "discounted_price",
       "gst_percentage",
       "cost_to_company",
-      "reorder_level"
+      "reorder_level",
+      "hsn_code"
     ];
   }
 
@@ -49,7 +50,8 @@ class ProductModel extends BaseModel {
       "discounted_price",
       "gst_percentage",
       "cost_to_company",
-      "reorder_level"
+      "reorder_level",
+      "hsn_code"
     ];
   }
 
@@ -100,6 +102,7 @@ class ProductModel extends BaseModel {
           "products.gst_percentage",
           "products.cost_to_company",
           "products.reorder_level",
+          "products.hsn_code",
           "category.category_name as category_name",
           "category.global_category_id as global_category_id",
           "gc.category_name as global_category_name",
@@ -160,6 +163,7 @@ class ProductModel extends BaseModel {
           "products.gst_percentage",
           "products.cost_to_company",
           "products.reorder_level",
+          "products.hsn_code",
           "category.category_name as category_name",
           "gc.category_name as global_category_name",
           qb.raw("(SELECT MAX(created_at) FROM items WHERE items.product_id = products.product_id AND items.is_deleted = false) as last_added_date")
@@ -229,6 +233,7 @@ class ProductModel extends BaseModel {
             "products.gst_percentage",
             "products.cost_to_company",
             "products.reorder_level",
+            "products.hsn_code",
             "category.category_name as category_name",
             "category.global_category_id as global_category_id",
             "gc.category_name as global_category_name",
@@ -375,6 +380,7 @@ class ProductModel extends BaseModel {
           "products.category_id",
           "products.mrp",
           "products.discounted_price",
+          "products.hsn_code",
           "category.category_name as category_name",
           qb.raw(
             "(SELECT count(*) FROM items WHERE items.product_id = products.product_id AND items.status = 'available') as stock_quantity"
@@ -421,6 +427,7 @@ class ProductModel extends BaseModel {
           "products.category_id",
           "products.mrp",
           "products.discounted_price",
+          "products.hsn_code",
           "category.category_name as category_name",
           "product_codes.code as product_code",
           qb.raw(

@@ -127,7 +127,8 @@ const createProductSchema = Joi.object({
   discounted_price: Joi.number().allow(0, null).optional().label("Discounted Price"),
   gst_percentage: Joi.number().allow(0, null).optional().label("GST Percentage"),
   cost_to_company: Joi.number().allow(0, null).optional().label("Cost to Company"),
-  reorder_level: Joi.number().integer().min(0).default(10).optional().label("Reorder Level")
+  reorder_level: Joi.number().integer().min(0).default(10).optional().label("Reorder Level"),
+  hsn_code: Joi.string().trim().allow("", null).optional().label("HSN Code")
 });
 
 // ✅ Schema for updating product
@@ -215,7 +216,8 @@ const updateProductSchema = Joi.object({
   discounted_price: Joi.number().allow(0, null).optional().label("Discounted Price"),
   gst_percentage: Joi.number().allow(0, null).optional().label("GST Percentage"),
   cost_to_company: Joi.number().allow(0, null).optional().label("Cost to Company"),
-  reorder_level: Joi.number().integer().min(0).optional().label("Reorder Level")
+  reorder_level: Joi.number().integer().min(0).optional().label("Reorder Level"),
+  hsn_code: Joi.string().trim().allow("", null).optional().label("HSN Code")
 })
   .min(1); // ✅ at least one field required
 

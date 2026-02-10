@@ -86,6 +86,7 @@ class ProductManager {
             gst_percentage: Number(cleanRow.gst_percentage || cleanRow.gst_ || 0),
             cost_to_company: Number(cleanRow.cost_to_company || cleanRow.ctc || 0),
             reorder_level: Number(cleanRow.reorder_level || 10),
+            hsn_code: String(cleanRow.hsn_code || cleanRow.hsn || ""),
             product_image: cleanRow.image_url || cleanRow.image ? [{ file_path: cleanRow.image_url || cleanRow.image, view: "front" }] : []
           };
 
