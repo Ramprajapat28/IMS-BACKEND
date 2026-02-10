@@ -9,7 +9,7 @@ const { RES_LOCALS } = require("./constant");
 const Router = express.Router();
 const openrouter = express.Router();
 
-const Authloginrouter = require("../../routes/controllers/open/authloginrouter");
+const Authloginrouter = require("../../routes/controllers/open/authloginRouter");
 const RoomRouter = require("../../routes/controllers/RoomRouter");
 const ShelfRouter = require("../../routes/controllers/shelfRouter");
 const RackRouter = require("../../routes/controllers/RackRouter");
@@ -20,7 +20,7 @@ const ShopifyRouter = require("../controllers/open/shopifyRouter");
 const ItemRouter = require("../../routes/controllers/ItemRouter");
 const OrderRouter = require("../../routes/controllers/OrderRouter");
 const ProductRouter = require("../../routes/controllers/ProductRouter");
-const UserRouter = require("../../routes/controllers/UserRouter");
+const UserRouter = require("../../routes/controllers/userRouter");
 const CategoryRouter = require("../../routes/controllers/CategoryRouter");
 
 const DashboardRouter = require("../../routes/controllers/DashboardRouter");
