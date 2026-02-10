@@ -66,10 +66,11 @@ class itemManager {
     order_id = null,
     shelf_id = null,
     rack_id = null,  // 🆕 Can sell from racks too
-    mode = ORDER_MODE.ONLINE
+    mode = ORDER_MODE.ONLINE,
+    userId = null
   ) {
     try {
-      const itemModel = new ItemModel();
+      const itemModel = new ItemModel(userId);
       const orderModel = new OrderModel();
 
       product_id = Number(product_id);
@@ -133,7 +134,8 @@ class itemManager {
           rack_id: rack_id || null,
           quantity,
           status: isReturn ? ORDER_STATUS.RETURNED : ORDER_STATUS.SOLD,
-          mode
+          mode,
+          created_by: userId
         };
 
         const createdOrder = await orderModel.create(orderData);
@@ -214,9 +216,9 @@ class itemManager {
       throw new Error(`Failed to get items: ${error.message}`);
     }
   }
-  static async returnStock({ product_id, quantity, shelf_id, rack_id }) {
+  static async returnStock({ product_id, quantity, shelf_id, rack_id, userId = null }) {
     try {
-      const itemModel = new ItemModel();
+      const itemModel = new ItemModel(userId);
       const productModel = new ProductModel();
 
       if (!product_id || !quantity) {
@@ -244,7 +246,9 @@ class itemManager {
         ITEM_STATUS.AVAILABLE, // Status should be available after return
         null,  // order_id
         shelf_id,
-        rack_id
+        rack_id,
+        ORDER_MODE.ONLINE, // default mode for returns if not specified
+        userId
       );
 
       return {

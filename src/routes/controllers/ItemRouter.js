@@ -64,7 +64,8 @@ router.post(
           order_id,
           shelf_id,
           rack_id,
-          mode
+          mode,
+          res.locals.userInfo?.user?.user_id
         );
 
         if (!item) {
@@ -112,7 +113,8 @@ router.post(
           product_id: Number(product_id),
           quantity: Number(quantity),
           shelf_id: shelf_id ? Number(shelf_id) : undefined,
-          rack_id: rack_id ? Number(rack_id) : undefined
+          rack_id: rack_id ? Number(rack_id) : undefined,
+          userId: res.locals.userInfo?.user?.user_id
         });
 
         return res.json({

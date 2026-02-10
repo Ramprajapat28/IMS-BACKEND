@@ -9,7 +9,7 @@ class OrderModel extends BaseModel {
 
     // ✅ PUBLIC COLUMNS
     getPublicColumns() {
-        return ["order_id", "product_id", "shelf_id", "rack_id", "quantity", "status", "mode", "created_at", "updated_at"];
+        return ["order_id", "product_id", "shelf_id", "rack_id", "quantity", "status", "mode", "created_by", "created_at", "updated_at"];
     }
 
     async findAllPaginated(filters = {}, page = 1, limit = 10) {
@@ -26,6 +26,7 @@ class OrderModel extends BaseModel {
                 "orders.rack_id",
                 "orders.quantity",
                 "orders.status",
+                "orders.created_by",
                 "orders.created_at",
                 "orders.updated_at",
                 // Product columns
@@ -35,6 +36,8 @@ class OrderModel extends BaseModel {
                 "products.barcode as product_barcode",
                 "products.vendor_id as product_vendor_id",
                 "products.product_image",
+                // User columns
+                "users.name as user_name",
                 // Shelf columns
                 "shelf.shelf_name",
                 "shelf.warehouse_id",
@@ -65,6 +68,7 @@ class OrderModel extends BaseModel {
                 .leftJoin("rooms as rack_rooms", "racks.room_id", "rack_rooms.room_id")
                 .leftJoin("warehouses as rack_warehouses", "racks.warehouse_id", "rack_warehouses.warehouse_id")
                 .leftJoin("category", "products.category_id", "category.category_id")
+                .leftJoin("users", "orders.created_by", "users.user_id")
                 .where("orders.is_deleted", false
                 );
 
@@ -144,6 +148,7 @@ class OrderModel extends BaseModel {
                 "orders.rack_id",
                 "orders.quantity",
                 "orders.status",
+                "orders.created_by",
                 "orders.created_at",
                 "orders.updated_at",
                 // Product columns
@@ -153,6 +158,8 @@ class OrderModel extends BaseModel {
                 "products.barcode as product_barcode",
                 "products.vendor_id as product_vendor_id",
                 "products.product_image",
+                // User columns
+                "users.name as user_name",
                 // Shelf columns
                 "shelf.shelf_name",
                 "shelf.warehouse_id",
@@ -183,6 +190,7 @@ class OrderModel extends BaseModel {
                 .leftJoin("rooms as rack_rooms", "racks.room_id", "rack_rooms.room_id")
                 .leftJoin("warehouses as rack_warehouses", "racks.warehouse_id", "rack_warehouses.warehouse_id")
                 .leftJoin("category", "products.category_id", "category.category_id")
+                .leftJoin("users", "orders.created_by", "users.user_id")
                 .where("orders.order_id", order_id)
                 .where("orders.is_deleted", false)
                 .first();

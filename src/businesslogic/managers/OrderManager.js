@@ -10,7 +10,7 @@ const {
 
 class OrderManager {
 
-    static async createOrder(product_id, shelf_id, quantity, status) {
+    static async createOrder(product_id, shelf_id, quantity, status, userId = null) {
         const { error, value } = createOrderSchema.validate(
             { product_id, shelf_id, quantity, status },
             { abortEarly: false, stripUnknown: true }
@@ -19,13 +19,14 @@ class OrderManager {
         if (error) throw new JoiValidatorError(error);
 
         try {
-            const orderModel = new OrderModel();
+            const orderModel = new OrderModel(userId);
 
             const order = await orderModel.create({
                 product_id: value.product_id,
                 shelf_id: value.shelf_id,
                 quantity: value.quantity,
-                status: value.status || ORDER_STATUS.PROCESSING
+                status: value.status || ORDER_STATUS.PROCESSING,
+                created_by: userId
             });
 
             return order;
