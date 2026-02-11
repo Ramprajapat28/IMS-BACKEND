@@ -5,9 +5,9 @@ async function generateAndUploadBarcode(barcodeValue) {
     const buffer = await bwipjs.toBuffer({
       bcid: "code128",     // barcode type
         text: barcodeValue,           // SKU = barcode value
-        scale: 2,          // controls width
+        scale: 3,          // controls width
         height: 15,        // bar height (mm-ish)
-        width:30,        // force total width
+        width:50,        // force total width
         paddingwidth: 10,
         paddingheight: 10,
 
