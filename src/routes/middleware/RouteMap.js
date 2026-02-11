@@ -33,7 +33,7 @@ class RouteMap {
     app.use("/open/api/", openrouter);
     // 🔓 OPEN ROUTES (NO JWT)
     app.use("/open/api/auth",Authrouter);
-    app.use("/open/api/barcode",ProductRouter);
+    // app.use("/open/api/barcode",ProductRouter);
 
 
     openrouter.use("/auth",Authrouter);
@@ -49,7 +49,7 @@ class RouteMap {
       Router
     );
 
-    Router.use("/auth", Authrouter);
+    // Router.use("/auth", Authrouter);
     Router.use("/users", UserRouter);
     Router.use("/rooms", RoomRouter);
     Router.use("/shelfs", ShelfRouter);
