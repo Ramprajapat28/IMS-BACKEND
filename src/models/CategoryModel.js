@@ -108,31 +108,63 @@ class CategoryModel extends BaseModel {
     return parseInt(result.count);
   }
 
-  async countProductsByCategory() {
+  // async countProductsByCategory() {
+  //   try {
+  //     const qb = await this.getQueryBuilder();
+
+  //     const categories = await qb("category as c")
+  //       .select(
+  //         "c.category_id",
+  //         "c.category_name",
+  //         "c.global_category_id",
+  //         "c.logo_url",
+  //         "c.sizes",
+  //         qb.raw(`(
+  //           COUNT(DISTINCT p.product_code_id) + 
+  //           COUNT(CASE WHEN p.product_code_id IS NULL THEN p.product_id END)
+  //         )::integer as total_products`)
+  //       )
+  //       .leftJoin("products as p", function () {
+  //         this.on("p.category_id", "c.category_id")
+  //           .andOn("p.is_deleted", qb.raw("false"));
+  //       })
+  //       .where("c.is_deleted", false)
+  //       .groupBy("c.category_id", "c.category_name", "c.global_category_id", "c.logo_url", "c.sizes")
+  //       .orderBy("c.category_id", "asc");
+
+  //     return categories.map(c => this.normalizeCategory(c));
+
+  //   } catch (e) {
+  //     throw new DatabaseError(e);
+  //   }
+  // }
+
+  async countProductsByGlobalCategory() {
     try {
       const qb = await this.getQueryBuilder();
 
-      const categories = await qb("category as c")
+      const categories = await qb(`${PUBLIC_SCHEMA}.global_category as gc`)
         .select(
-          "c.category_id",
-          "c.category_name",
-          "c.global_category_id",
-          "c.logo_url",
-          "c.sizes",
+          "gc.global_category_id",
+          "gc.category_name",
           qb.raw(`(
             COUNT(DISTINCT p.product_code_id) + 
             COUNT(CASE WHEN p.product_code_id IS NULL THEN p.product_id END)
           )::integer as total_products`)
         )
+        .leftJoin("category as c", function () {
+          this.on("c.global_category_id", "gc.global_category_id")
+            .andOn("c.is_deleted", qb.raw("false"));
+        })
         .leftJoin("products as p", function () {
           this.on("p.category_id", "c.category_id")
             .andOn("p.is_deleted", qb.raw("false"));
         })
-        .where("c.is_deleted", false)
-        .groupBy("c.category_id", "c.category_name", "c.global_category_id", "c.logo_url", "c.sizes")
-        .orderBy("c.category_id", "asc");
+        .where("gc.is_deleted", false)
+        .groupBy("gc.global_category_id", "gc.category_name")
+        .orderBy("gc.category_name", "asc");
 
-      return categories.map(c => this.normalizeCategory(c));
+      return categories;
 
     } catch (e) {
       throw new DatabaseError(e);

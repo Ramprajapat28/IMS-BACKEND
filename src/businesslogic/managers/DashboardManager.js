@@ -14,7 +14,7 @@ class DashboardManager {
     const orderModel = new OrderModel(userId);
     return await orderModel.getLeastSellingProducts(limit);
   }
-  
+
   // static async getTopSellingProducts(limit = 10) {
   //   const qb = db.getQueryBuilder();
 
@@ -162,11 +162,11 @@ class DashboardManager {
 
   static async getProductCountByCategory(userId = null) {
     const categoryModel = new CategoryModel(userId);
-    const data = await categoryModel.countProductsByCategory();
+    const data = await categoryModel.countProductsByGlobalCategory();
 
     // Normalize PostgreSQL count (string → number)
     return data.map((row) => ({
-      category_id: row.category_id,
+      category_id: row.global_category_id,
       category_name: row.category_name,
       total_products: Number(row.total_products),
     }));
