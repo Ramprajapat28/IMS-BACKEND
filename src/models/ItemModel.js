@@ -82,21 +82,29 @@ class ItemModel extends BaseModel {
     }
   }
 
-  async create(data, product_id) {
+  async bulkCreate(itemsData, product_id) {
     try {
       const qb = await this.getQueryBuilder();
-      const insertData = this.insertStatement({
-        ...data,
+      const insertData = itemsData.map(item => this.insertStatement({
+        ...item,
         product_id,
         status: ITEM_STATUS.AVAILABLE,
-        remark: data.remark ?? null
-      });
+        remark: item.remark ?? null
+      }));
 
-      const [item] = await qb("items")
-        .insert(insertData)
-        .returning(this.getPublicColumns());
+      
+      const chunkSize = 500;
+      const createdItems = [];
 
-      return item;
+      for (let i = 0; i < insertData.length; i += chunkSize) {
+        const chunk = insertData.slice(i, i + chunkSize);
+        const chunkResults = await qb("items")
+          .insert(chunk)
+          .returning(this.getPublicColumns());
+        createdItems.push(...chunkResults);
+      }
+
+      return createdItems;
     } catch (e) {
       throw new DatabaseError(e);
     }

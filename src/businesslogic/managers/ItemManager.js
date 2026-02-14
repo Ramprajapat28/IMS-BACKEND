@@ -36,22 +36,15 @@ class itemManager {
         throw new Error("Either shelf_id or rack_id is required");
       }
 
-      // 2. Insert items (1 row = 1 physical item)
-      const createdItems = [];
+      // 2. Insert items in bulk (1 row = 1 physical item)
+      const itemsToCreate = Array.from({ length: quantity }, () => ({
+        name: Product.name,
+        shelf_id: shelf_id || null,
+        rack_id: rack_id || null,
+        remark: remark || null,
+      }));
 
-      for (let i = 0; i < quantity; i++) {
-        const item = await itemModel.create(
-          {
-            name: Product.name, // Product name for the item
-            shelf_id: shelf_id || null,
-            rack_id: rack_id || null,
-            remark: remark || null, // 🆕 Add remark field (optional)
-          },
-          product_id
-        );
-
-        createdItems.push(item);
-      }
+      const createdItems = await itemModel.bulkCreate(itemsToCreate, product_id);
 
       return createdItems; // return all created rows
     } catch (error) {
