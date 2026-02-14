@@ -1,6 +1,7 @@
 const BaseModel = require("./libs/BaseModel");
 const DatabaseError = require("../errorhandlers/DatabaseError");
 const { ORDER_STATUS } = require("../models/libs/dbConstants")
+const db = require("../models/libs/Db");
 
 class OrderModel extends BaseModel {
     constructor(userId) {
@@ -218,6 +219,50 @@ class OrderModel extends BaseModel {
         }
 
     }
+
+    
+
+    async getTopSellingProducts(limit = 10) {
+    const qb = db.getQueryBuilder();
+
+    return await qb('orders as o')
+      .join('products as p', 'p.product_id', 'o.product_id')
+      .where('o.status', 'sold')
+      .select(
+        'p.product_id',
+        'p.name',
+        'p.product_image'
+      )
+      .sum('o.quantity as total_sold')
+      .groupBy(
+        'p.product_id',
+        'p.name',
+        'p.product_image'
+      )
+      .orderBy('total_sold', 'desc')
+      .limit(limit);
+  }
+
+  async getLeastSellingProducts(limit = 10) {
+    const qb = db.getQueryBuilder();
+
+    return await qb('orders as o')
+      .join('products as p', 'p.product_id', 'o.product_id')
+      .where('o.status', 'sold')
+      .select(
+        'p.product_id',
+        'p.name',
+        'p.product_image'
+      )
+      .sum('o.quantity as total_sold')
+      .groupBy(
+        'p.product_id',
+        'p.name',
+        'p.product_image'
+      )
+      .orderBy('total_sold', 'asc')
+      .limit(limit);
+  }
 
 
 
