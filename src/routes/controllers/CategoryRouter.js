@@ -12,11 +12,11 @@ router.post("/createGlobal",
   appWrapper(async (req, res) => {
     const globalCategory = await CategoryManager.createGlobalCategory(req.body, res.locals.userInfo?.user?.user_id);
 
-    return res.json({
+    return {
       success: true,
       data: globalCategory,
       message: "Global Category created successfully"
-    });
+    };
 
   }, [ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 )
@@ -32,10 +32,10 @@ router.get('/list_global',
       });
     }
 
-    return res.json({
+    return {
       success: true,
       data: globalCategories
-    });
+    };
   }, [ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 )
 
@@ -48,10 +48,10 @@ router.post('/delete_global/:id',
       globalCategoryId
     );
 
-    return res.status(200).json({
+    return {
       success: true,
       data: result
-    });
+    };
 
   }, [ACCESS_ROLES.ACCOUNT_SUPER_ADMIN]
   ))
@@ -61,11 +61,11 @@ router.put('/update_global/:id',
     const globalCategoryId = Number(req.params.id);
     const globalCategory = await CategoryManager.updateGlobalCategory(globalCategoryId, req.body, res.locals.userInfo?.user?.user_id);
 
-    return res.json({
+    return {
       success: true,
       data: globalCategory,
       message: "Global Category updated successfully"
-    });
+    };
   }, [ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 )
 
@@ -73,10 +73,10 @@ router.get('/list',
   appWrapper(async (req, res) => {
     const categories = await CategoryManager.findAllCategories();
 
-    return res.json({
+    return {
       success: true,
       data: categories
-    });
+    };
   }, [ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 )
 
@@ -85,11 +85,11 @@ router.post("/create",
     const category = await CategoryManager.createCategory(req.body, res.locals.userInfo?.user?.user_id);
 
 
-    return res.json({
+    return {
       success: true,
       data: category,
       message: "Category created successfully"
-    });
+    };
 
   }, [ACCESS_ROLES.ACCOUNT_SUPER_ADMIN]
   )
@@ -100,11 +100,11 @@ router.put('/update/:id',
     const categoryId = Number(req.params.id);
     const category = await CategoryManager.updateCategory(categoryId, req.body, res.locals.userInfo?.user?.user_id);
 
-    return res.json({
+    return {
       success: true,
       data: category,
       message: "Category updated successfully"
-    });
+    };
   }, [ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 )
 
@@ -119,10 +119,10 @@ router.post(
         res.locals.userInfo?.user?.user_id
       );
 
-      return res.status(200).json({
+      return {
         success: true,
         data: result
-      });
+      };
 
     } catch (err) {
       return res.status(400).json({
@@ -154,10 +154,10 @@ router.get(
       });
     }
 
-    return res.json({
+    return {
       success: true,
       data: products,
-    });
+    };
   }, [ACCESS_ROLES.ALL])
 );
 
@@ -168,10 +168,10 @@ router.get(
 
     const category = await CategoryManager.getGlobalCategoryById(categoryId);
 
-    return res.json({
+    return {
       success: true,
       data: category
-    });
+    };
   }, [ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 );
 
@@ -187,10 +187,10 @@ router.get(
       });
     }
 
-    return res.json({
+    return {
       success: true,
       data: categories
-    });
+    };
   }, [ACCESS_ROLES.ALL])
 );
 
@@ -211,10 +211,10 @@ router.post(
       });
     }
 
-    return res.json({
+    return {
       success: true,
       data: categories,
-    });
+    };
   }, [ACCESS_ROLES.ALL])
 );
 

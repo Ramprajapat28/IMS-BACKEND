@@ -108,36 +108,36 @@ class CategoryModel extends BaseModel {
     return parseInt(result.count);
   }
 
-  // async countProductsByCategory() {
-  //   try {
-  //     const qb = await this.getQueryBuilder();
+  async countProductsByCategory() {
+    try {
+      const qb = await this.getQueryBuilder();
 
-  //     const categories = await qb("category as c")
-  //       .select(
-  //         "c.category_id",
-  //         "c.category_name",
-  //         "c.global_category_id",
-  //         "c.logo_url",
-  //         "c.sizes",
-  //         qb.raw(`(
-  //           COUNT(DISTINCT p.product_code_id) + 
-  //           COUNT(CASE WHEN p.product_code_id IS NULL THEN p.product_id END)
-  //         )::integer as total_products`)
-  //       )
-  //       .leftJoin("products as p", function () {
-  //         this.on("p.category_id", "c.category_id")
-  //           .andOn("p.is_deleted", qb.raw("false"));
-  //       })
-  //       .where("c.is_deleted", false)
-  //       .groupBy("c.category_id", "c.category_name", "c.global_category_id", "c.logo_url", "c.sizes")
-  //       .orderBy("c.category_id", "asc");
+      const categories = await qb("category as c")
+        .select(
+          "c.category_id",
+          "c.category_name",
+          "c.global_category_id",
+          "c.logo_url",
+          "c.sizes",
+          qb.raw(`(
+            COUNT(DISTINCT p.product_code_id) + 
+            COUNT(CASE WHEN p.product_code_id IS NULL THEN p.product_id END)
+          )::integer as total_products`)
+        )
+        .leftJoin("products as p", function () {
+          this.on("p.category_id", "c.category_id")
+            .andOn("p.is_deleted", qb.raw("false"));
+        })
+        .where("c.is_deleted", false)
+        .groupBy("c.category_id", "c.category_name", "c.global_category_id", "c.logo_url", "c.sizes")
+        .orderBy("c.category_id", "asc");
 
-  //     return categories.map(c => this.normalizeCategory(c));
+      return categories.map(c => this.normalizeCategory(c));
 
-  //   } catch (e) {
-  //     throw new DatabaseError(e);
-  //   }
-  // }
+    } catch (e) {
+      throw new DatabaseError(e);
+    }
+  }
 
   async countProductsByGlobalCategory() {
     try {

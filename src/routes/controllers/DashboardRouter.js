@@ -8,7 +8,7 @@ router.get(
   '/top-selling',
   appWrapper(async (req, res) => {
     const data = await DashboardManager.getTopSellingProducts(10, res.locals.userInfo?.user?.user_id);
-    res.json({ success: true, data });
+    return { success: true, data };
   }, [ACCESS_ROLES.ACCOUNT_SUPER_ADMIN]
   ));
 
@@ -16,7 +16,7 @@ router.get(
   '/least-selling',
   appWrapper(async (req, res) => {
     const data = await DashboardManager.getLeastSellingProducts(10, res.locals.userInfo?.user?.user_id);
-    res.json({ success: true, data });
+    return { success: true, data };
   }, [ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 );
 
@@ -24,10 +24,10 @@ router.get(
   "/total_products",
   appWrapper(async (req, res) => {
     const data = await DashboardManager.totalProducts(res.locals.userInfo?.user?.user_id);
-    res.json({
+    return {
       success: true,
       data
-    })
+    };
   }, [ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 )
 
@@ -35,10 +35,10 @@ router.get(
   "/total_order",
   appWrapper(async (req, res) => {
     const data = await DashboardManager.totalOrder(res.locals.userInfo?.user?.user_id);
-    res.json({
+    return {
       success: true,
       data
-    })
+    };
   }, [ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 )
 
@@ -48,11 +48,11 @@ router.get("/stock-status", appWrapper(async (req, res) => {
 
   const data = await DashboardManager.getDetailOfLowAndOutOfStock(lowStockLimit, res.locals.userInfo?.user?.user_id);
 
-  return res.status(200).json({
+  return {
     success: true,
     message: "Stock status fetched successfully",
     data
-  });
+  };
 
 }, [ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 );
