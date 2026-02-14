@@ -1,4 +1,5 @@
 const WarehouseModel = require("../../models/warehouseModel");
+const ItemModel = require("../../models/ItemModel");
 const ValidationError = require("../../errorhandlers/ValidationError");
 
 class WarehouseManager {
@@ -77,6 +78,7 @@ class WarehouseManager {
 
   static async deleteWarehouse(id, userId) {
     const model = new WarehouseModel(userId);
+    const itemModel = new ItemModel(userId);
 
     const existing = await model.findWarehouseById(id);
     if (!existing) {
@@ -84,6 +86,17 @@ class WarehouseManager {
         details: [{
           path: ["warehouse_id"],
           message: "Warehouse not found"
+        }]
+      });
+    }
+
+    // Check if warehouse has active items
+    const hasItems = await itemModel.hasActiveItems("warehouse", id);
+    if (hasItems) {
+      throw new ValidationError({
+        details: [{
+          path: ["warehouse_id"],
+          message: "Cannot delete warehouse because it still contains products"
         }]
       });
     }

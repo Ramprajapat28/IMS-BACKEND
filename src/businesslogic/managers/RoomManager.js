@@ -1,4 +1,5 @@
 const RoomModel = require("../../models/RoomModel");
+const ItemModel = require("../../models/ItemModel");
 const JoiValidatorError = require("../../errorhandlers/JoiValidationError");
 
 const {
@@ -9,28 +10,28 @@ const {
 
 class RoomManager {
 
- static async getAllRoomsPaginated(userId, page, limit) {
-  try {
-    const roomModel = new RoomModel(userId);
-    const result = await roomModel.getAllRoomsPaginated(page, limit);
+  static async getAllRoomsPaginated(userId, page, limit) {
+    try {
+      const roomModel = new RoomModel(userId);
+      const result = await roomModel.getAllRoomsPaginated(page, limit);
 
-    const totalPages = Math.ceil(result.total / limit);
-    const offset = (page - 1) * limit;
+      const totalPages = Math.ceil(result.total / limit);
+      const offset = (page - 1) * limit;
 
-    return {
-      rooms: result.data,
-      total: result.total,
-      page,
-      limit,
-      offset,
-      totalPages,
-      previous: page > 1 ? page - 1 : null,
-      next: page < totalPages ? page + 1 : null
-    };
-  } catch (err) {
-    throw new Error(`Failed to fetch rooms: ${err.message}`);
+      return {
+        rooms: result.data,
+        total: result.total,
+        page,
+        limit,
+        offset,
+        totalPages,
+        previous: page > 1 ? page - 1 : null,
+        next: page < totalPages ? page + 1 : null
+      };
+    } catch (err) {
+      throw new Error(`Failed to fetch rooms: ${err.message}`);
+    }
   }
-}
 
   static async getRoomById(id, userId) {
     const { error, value } = roomIdSchema.validate(
@@ -50,32 +51,32 @@ class RoomManager {
     return room;
   }
 
-static async createRoom(payload, userId) {
-  const { error, value } = createRoomSchema.validate(payload, {
+  static async createRoom(payload, userId) {
+    const { error, value } = createRoomSchema.validate(payload, {
       abortEarly: false,
       stripUnknown: true
-  });
-  if (error) throw new JoiValidatorError(error);
+    });
+    if (error) throw new JoiValidatorError(error);
 
-  const roomModel = new RoomModel(userId);
+    const roomModel = new RoomModel(userId);
 
-  try {
+    try {
       const room = await roomModel.createRoom(value);
       return room;
-  } catch (e) {
+    } catch (e) {
       // Logical errors about room already existing
       if (e.message.includes("Room exists")) {
-          throw new JoiValidatorError({
-              details: [
-                  { path: ["room_name"], message: e.message }
-              ]
-          });
+        throw new JoiValidatorError({
+          details: [
+            { path: ["room_name"], message: e.message }
+          ]
+        });
       }
 
       // Unexpected database errors
       throw e;
+    }
   }
-}
 
 
 
@@ -110,6 +111,19 @@ static async createRoom(payload, userId) {
     if (error) throw new JoiValidatorError(error);
 
     const roomModel = new RoomModel(userId);
+    const itemModel = new ItemModel(userId);
+
+    // Check if room has active items
+    const hasItems = await itemModel.hasActiveItems("room", value.id);
+    if (hasItems) {
+      throw new JoiValidatorError({
+        details: [{
+          path: ["room_id"],
+          message: "Cannot delete room because it still contains products"
+        }]
+      });
+    }
+
     const deleted = await roomModel.deleteRoom(value.id);
 
     if (!deleted) {

@@ -92,7 +92,7 @@ class ItemModel extends BaseModel {
         remark: item.remark ?? null
       }));
 
-      
+
       const chunkSize = 500;
       const createdItems = [];
 
@@ -430,6 +430,40 @@ class ItemModel extends BaseModel {
       return await qb("items")
         .whereIn("id", itemIds)
         .update({ order_id });
+    } catch (e) {
+      throw new DatabaseError(e);
+    }
+  }
+
+  async hasActiveItems(locationType, locationId) {
+    try {
+      const qb = await this.getQueryBuilder();
+      let query = qb("items").where("items.is_deleted", false).count("* as count");
+
+      if (locationType === "shelf") {
+        query.where("shelf_id", locationId);
+      } else if (locationType === "rack") {
+        query.where("rack_id", locationId);
+      } else if (locationType === "room") {
+        query
+          .leftJoin("shelf", "items.shelf_id", "shelf.shelf_id")
+          .leftJoin("racks", "items.rack_id", "racks.rack_id")
+          .where(function () {
+            this.where("shelf.room_id", locationId).orWhere("racks.room_id", locationId);
+          });
+      } else if (locationType === "warehouse") {
+        query
+          .leftJoin("shelf", "items.shelf_id", "shelf.shelf_id")
+          .leftJoin("racks", "items.rack_id", "racks.rack_id")
+          .where(function () {
+            this.where("shelf.warehouse_id", locationId).orWhere("racks.warehouse_id", locationId);
+          });
+      } else {
+        throw new Error("Invalid location type for stock check");
+      }
+
+      const [{ count }] = await query;
+      return Number(count) > 0;
     } catch (e) {
       throw new DatabaseError(e);
     }

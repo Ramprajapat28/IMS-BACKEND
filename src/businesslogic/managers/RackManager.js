@@ -1,4 +1,5 @@
 const RackModel = require("../../models/RackModel");
+const ItemModel = require("../../models/ItemModel");
 const JoiValidatorError = require("../../errorhandlers/JoiValidationError");
 const validationError = require("../../errorhandlers/ValidationError");
 const Joi = require("joi");
@@ -97,6 +98,19 @@ class RackManager {
 
         try {
             const rackModel = new RackModel(userId);
+            const itemModel = new ItemModel(userId);
+
+            // Check if rack has active items
+            const hasItems = await itemModel.hasActiveItems("rack", value.rack_id);
+            if (hasItems) {
+                throw new JoiValidatorError({
+                    details: [{
+                        path: ["rack_id"],
+                        message: "Cannot delete rack because it still contains products"
+                    }]
+                });
+            }
+
             const rack = await rackModel.deleteRack(value.rack_id);
 
             if (!rack) {

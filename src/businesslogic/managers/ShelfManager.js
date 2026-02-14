@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const ShelfModel = require("../../models/shelfModel");
 const RoomModel = require("../../models/RoomModel");
+const ItemModel = require("../../models/ItemModel");
 const shelfSchema = require("../../validators/shelfValidator");
 const JoiValidatorError = require("../../errorhandlers/JoiValidationError");
 
@@ -99,6 +100,19 @@ class ShelfManager {
     const { id } = this.validate(shelfSchema.id, params);
 
     const shelfModel = new ShelfModel(userId);
+    const itemModel = new ItemModel(userId);
+
+    // Check if shelf has active items
+    const hasItems = await itemModel.hasActiveItems("shelf", id);
+    if (hasItems) {
+      throw new JoiValidatorError({
+        details: [{
+          path: ["shelf_id"],
+          message: "Cannot delete shelf because it still contains products"
+        }]
+      });
+    }
+
     return await shelfModel.deleteShelf(id);
   }
 }
