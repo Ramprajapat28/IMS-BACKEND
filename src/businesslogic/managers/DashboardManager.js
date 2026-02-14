@@ -5,12 +5,12 @@ const ItemModel = require("../../models/ItemModel");
 const CategoryModel = require("../../models/CategoryModel");
 
 class DashboardManager {
-  static async getTopSellingProducts(limit = 10, userId = null) {
+  static async getTopSellingProducts(limit = 5, userId = null) {
     const orderModel = new OrderModel(userId);
     return await orderModel.getTopSellingProducts(limit);
   }
 
-  static async getLeastSellingProducts(limit = 10, userId = null) {
+  static async getLeastSellingProducts(limit = 5, userId = null) {
     const orderModel = new OrderModel(userId);
     return await orderModel.getLeastSellingProducts(limit);
   }
