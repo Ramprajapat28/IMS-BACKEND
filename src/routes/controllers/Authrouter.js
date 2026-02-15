@@ -5,7 +5,12 @@ const { ACCESS_ROLES } = require("../../businesslogic/accessmanagement/roleConst
 
 const router = express.Router();
 
-// REGISTER
+/**
+ * POST /register_user
+ * Registers a new user in the system.
+ * Body: { email, password, name, role, etc. }
+ * Access: ALL
+ */
 router.post(
   "/register_user",
   appWrapper(

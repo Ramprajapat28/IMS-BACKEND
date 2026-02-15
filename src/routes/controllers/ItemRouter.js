@@ -6,7 +6,12 @@ const { appWrapper } = require("../routeWrapper");
 const { ACCESS_ROLES } = require("../../businesslogic/accessmanagement/roleConstants");
 
 
-// POST /items/addStock - Add stock for a product
+/**
+ * POST /addStock
+ * Adds stock for a specific product.
+ * Body: { quantity, shelf_id, rack_id, product_id, remark }
+ * Access: ALL
+ */
 router.post(
   "/addStock",
   // validate(validators.createProductSchema),
@@ -41,6 +46,12 @@ router.post(
   )
 );
 
+/**
+ * POST /removeStock
+ * Removes stock from a specific product.
+ * Body: { product_id, quantity, status, order_id, shelf_id, rack_id, mode }
+ * Access: ALL
+ */
 router.post(
   "/removeStock",
   appWrapper(
@@ -101,6 +112,12 @@ router.post(
 );
 
 
+/**
+ * POST /return-stock
+ * Returns stock for a specific product.
+ * Body: { product_id, quantity, shelf_id, rack_id }
+ * Access: ALL
+ */
 router.post(
   "/return-stock",
   appWrapper(
@@ -142,6 +159,11 @@ router.post(
 );
 
 
+/**
+ * POST /outward-scan
+ * Marks an item as scanned outward and updates its status.
+ * Body: { item_id, status }
+ */
 router.post(
   "/outward-scan",
   appWrapper(async (req, res) => {
@@ -171,6 +193,12 @@ router.post(
 );
 
 
+/**
+ * GET /count/:product_id
+ * Retrieves the count of items for a specific product.
+ * Params: product_id
+ * Access: ALL
+ */
 router.get(
   "/count/:product_id",
   appWrapper(
@@ -188,6 +216,11 @@ router.get(
   )
 );
 
+/**
+ * GET /all
+ * Retrieves all items for a product with pagination.
+ * Query: product_id, page, limit
+ */
 router.get(
   "/all",
   appWrapper(async (req, res) => {
@@ -227,7 +260,12 @@ router.get(
   })
 );
 
-// POST /items/transfer-stock - Transfer stock between locations
+/**
+ * POST /transfer-stock
+ * Transfers stock between different locations.
+ * Body: { ...transferDetails }
+ * Access: ALL
+ */
 router.post(
   "/transfer-stock",
   appWrapper(

@@ -36,16 +36,21 @@ const WarehouseManager = require("../../businesslogic/managers/WarehouseManager"
 //       }
 //     };
 
-    // const data = await WarehouseManager.getWarehouseDetailsByIds(
-    //   req.body,
-    //   userId
-    // );
+// const data = await WarehouseManager.getWarehouseDetailsByIds(
+//   req.body,
+//   userId
+// );
 
 
 //   }, [ACCESS_ROLES.ACCOUNT_ADMIN, ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 // );
 
-// GET ALL WAREHOUSES
+/**
+ * GET /get_all_warehouses
+ * Retrieves all warehouses with pagination.
+ * Query: page, limit
+ * Access: ALL
+ */
 router.get(
   "/get_all_warehouses",
   appWrapper(async (req, res) => {
@@ -75,7 +80,12 @@ router.get(
 
 
 
-// GET SINGLE WAREHOUSE BY ID
+/**
+ * GET /:id
+ * Retrieves a single warehouse by its ID.
+ * Params: id
+ * Access: ALL
+ */
 router.get(
   "/:id",
   appWrapper(async (req, res) => {
@@ -94,7 +104,12 @@ router.get(
   }, [ACCESS_ROLES.ALL])
 );
 
-// CREATE WAREHOUSE
+/**
+ * POST /create
+ * Creates a new warehouse.
+ * Body: { name, address, etc. }
+ * Access: ACCOUNT_ADMIN, ACCOUNT_SUPER_ADMIN
+ */
 router.post(
   "/create",
   appWrapper(async (req, res) => {
@@ -113,7 +128,13 @@ router.post(
   }, [ACCESS_ROLES.ACCOUNT_ADMIN, ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 );
 
-// UPDATE WAREHOUSE
+/**
+ * PUT /update/:id
+ * Updates an already existing warehouse.
+ * Params: id
+ * Body: { ...warehouseData }
+ * Access: ACCOUNT_ADMIN, ACCOUNT_SUPER_ADMIN
+ */
 router.put(
   "/update/:id",
   appWrapper(async (req, res) => {
@@ -134,7 +155,12 @@ router.put(
   }, [ACCESS_ROLES.ACCOUNT_ADMIN, ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 );
 
-// DELETE WAREHOUSE (soft delete)
+/**
+ * DELETE /delete/:id
+ * Deletes a warehouse by its ID (soft delete).
+ * Params: id
+ * Access: ACCOUNT_ADMIN, ACCOUNT_SUPER_ADMIN
+ */
 router.delete(
   "/delete/:id",
   appWrapper(async (req, res) => {

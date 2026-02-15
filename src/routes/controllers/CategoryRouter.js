@@ -7,6 +7,12 @@ const CategoryModel = require("../../models/CategoryModel");
 const { generatePresignedUploadUrl } = require("../../services/presignedUploadServices");
 
 
+/**
+ * POST /createGlobal
+ * Creates a new global category.
+ * Body: { name, description, etc. }
+ * Access: ACCOUNT_SUPER_ADMIN
+ */
 router.post("/createGlobal",
 
   appWrapper(async (req, res) => {
@@ -21,6 +27,11 @@ router.post("/createGlobal",
   }, [ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 )
 
+/**
+ * GET /list_global
+ * Retrieves all available global categories.
+ * Access: ACCOUNT_SUPER_ADMIN
+ */
 router.get('/list_global',
   appWrapper(async (req, res) => {
     const globalCategories = await CategoryManager.findAllGlobalCategories();
@@ -39,7 +50,13 @@ router.get('/list_global',
   }, [ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 )
 
-router.post('/delete_global/:id',
+/**
+ * DELETE /delete_global/:id
+ * Deletes a global category by its ID.
+ * Params: id
+ * Access: ACCOUNT_SUPER_ADMIN
+ */
+router.delete('/delete_global/:id',
   appWrapper(async (req, res) => {
 
     const globalCategoryId = Number(req.params.id);
@@ -56,6 +73,13 @@ router.post('/delete_global/:id',
   }, [ACCESS_ROLES.ACCOUNT_SUPER_ADMIN]
   ))
 
+/**
+ * PUT /update_global/:id
+ * Updates an existing global category.
+ * Params: id
+ * Body: { name, description, etc. }
+ * Access: ACCOUNT_SUPER_ADMIN
+ */
 router.put('/update_global/:id',
   appWrapper(async (req, res) => {
     const globalCategoryId = Number(req.params.id);
@@ -69,6 +93,11 @@ router.put('/update_global/:id',
   }, [ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 )
 
+/**
+ * GET /list
+ * Retrieves all categories.
+ * Access: ACCOUNT_SUPER_ADMIN
+ */
 router.get('/list',
   appWrapper(async (req, res) => {
     const categories = await CategoryManager.findAllCategories();
@@ -80,6 +109,12 @@ router.get('/list',
   }, [ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 )
 
+/**
+ * POST /create
+ * Creates a new category.
+ * Body: { name, global_category_id, etc. }
+ * Access: ACCOUNT_SUPER_ADMIN
+ */
 router.post("/create",
   appWrapper(async (req, res) => {
     const category = await CategoryManager.createCategory(req.body, res.locals.userInfo?.user?.user_id);
@@ -95,6 +130,13 @@ router.post("/create",
   )
 )
 
+/**
+ * PUT /update/:id
+ * Updates an existing category.
+ * Params: id
+ * Body: { name, description, etc. }
+ * Access: ACCOUNT_SUPER_ADMIN
+ */
 router.put('/update/:id',
   appWrapper(async (req, res) => {
     const categoryId = Number(req.params.id);
@@ -108,7 +150,13 @@ router.put('/update/:id',
   }, [ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 )
 
-router.post(
+/**
+ * DELETE /delete/:id
+ * Deletes a category by its ID.
+ * Params: id
+ * Access: ALL
+ */
+router.delete(
   "/delete/:id",
   appWrapper(async (req, res) => {
     try {
@@ -135,6 +183,13 @@ router.post(
 
 
 
+/**
+ * GET /category_name/:categoryName
+ * Retrieves products based on the category name with pagination.
+ * Params: categoryName
+ * Query: page, limit
+ * Access: ALL
+ */
 router.get(
   "/category_name/:categoryName",
   appWrapper(async (req, res) => {
@@ -161,6 +216,12 @@ router.get(
   }, [ACCESS_ROLES.ALL])
 );
 
+/**
+ * GET /global_category/:categoryId
+ * Retrieves a global category by its ID.
+ * Params: categoryId
+ * Access: ACCOUNT_SUPER_ADMIN
+ */
 router.get(
   "/global_category/:categoryId",
   appWrapper(async (req, res) => {
@@ -199,26 +260,30 @@ router.get(
 
 
 
-router.post(
+
+//  * GET /list-with-counts
+//  * Retrieves all categories with their associated product counts.
+//  * Access: ALL
+//  */
+router.get(
   "/list-with-counts",
   appWrapper(async (req, res) => {
     const categories = await CategoryManager.getCategoryListWithCounts();
 
-    if (!categories || categories.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "No categories found",
-      });
-    }
-
     return {
       success: true,
-      data: categories,
+      data: categories || [],
     };
   }, [ACCESS_ROLES.ALL])
 );
 
 
+/**
+ * POST /presigned-url
+ * Generates a presigned S3 URL for file uploads.
+ * Body: { fileName, functionality, subFunctionality }
+ * Access: ALL
+ */
 router.post(
   "/presigned-url",
   appWrapper(async (req, res) => {

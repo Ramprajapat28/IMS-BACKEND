@@ -4,7 +4,12 @@ const router = express.Router({ mergeParams: true });
 const { appWrapper } = require("../routeWrapper");
 const { ACCESS_ROLES } = require("../../businesslogic/accessmanagement/roleConstants");
 
-// Get all racks with filters
+/**
+ * GET /list
+ * Retrieves all racks with optional filters and pagination.
+ * Query: warehouse_id, room_id, rack_name, page, limit
+ * Access: ACCOUNT_ADMIN, ACCOUNT_SUPER_ADMIN
+ */
 router.get('/list',
     appWrapper(async (req, res) => {
         const { warehouse_id, room_id, rack_name, page = 1, limit = 10 } = req.query;
@@ -26,7 +31,12 @@ router.get('/list',
     }, [ACCESS_ROLES.ACCOUNT_ADMIN, ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 );
 
-// Get rack by ID
+/**
+ * GET /:id
+ * Retrieves a specific rack by its ID.
+ * Params: id
+ * Access: ACCOUNT_ADMIN, ACCOUNT_SUPER_ADMIN
+ */
 router.get('/:id',
     appWrapper(async (req, res) => {
         const rackId = Number(req.params.id);
@@ -39,7 +49,12 @@ router.get('/:id',
     }, [ACCESS_ROLES.ACCOUNT_ADMIN, ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 );
 
-// Create rack
+/**
+ * POST /create
+ * Creates a new rack.
+ * Body: { warehouse_id, room_id, rack_name, etc. }
+ * Access: ACCOUNT_ADMIN, ACCOUNT_SUPER_ADMIN
+ */
 router.post('/create',
     appWrapper(async (req, res) => {
         const rack = await RackManager.createRack(req.body, res.locals.userInfo?.user?.user_id);
@@ -52,7 +67,13 @@ router.post('/create',
     }, [ACCESS_ROLES.ACCOUNT_ADMIN, ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 );
 
-// Update rack
+/**
+ * PUT /:id
+ * Updates an existing rack.
+ * Params: id
+ * Body: { ...rackData }
+ * Access: ACCOUNT_SUPER_ADMIN
+ */
 router.put('/:id',
     appWrapper(async (req, res) => {
         const rackId = Number(req.params.id);
@@ -66,8 +87,13 @@ router.put('/:id',
     }, [ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 );
 
-// Delete rack (soft delete)
-router.post('/delete/:id',
+/**
+ * DELETE /delete/:id
+ * Deletes a rack by its ID (soft delete).
+ * Params: id
+ * Access: ACCOUNT_ADMIN, ACCOUNT_SUPER_ADMIN
+ */
+router.delete('/delete/:id',
     appWrapper(async (req, res) => {
         const rackId = Number(req.params.id);
         const result = await RackManager.deleteRack(rackId, res.locals.userInfo?.user?.user_id);

@@ -11,9 +11,12 @@ const { ACCESS_ROLES } = require("../../businesslogic/accessmanagement/roleConst
 // const validators = require("../../validators/product.validator");
 // const validate = require("../../middleware/validation.middleware");
 
-// 
-// GET ALL PRODUCTS
-// 
+/**
+ * GET /all
+ * Retrieves all products with pagination and search.
+ * Query Params: page, limit, search
+ * Access: ALL
+ */
 router.get(
   "/all",
   appWrapper(async (req, res) => {
@@ -55,9 +58,12 @@ router.get(
   }, [ACCESS_ROLES.ALL])
 );
 
-// 
-// CREATE PRODUCT
-// 
+/**
+ * POST /create
+ * Creates a new product.
+ * Body: { sku, name, product_images, barcode, etc. }
+ * Access: ALL
+ */
 router.post(
   "/create",
   appWrapper(async (req, res) => {
@@ -102,9 +108,12 @@ router.post(
 );
 
 
-// 
-// BULK IMPORT PRODUCTS
-// 
+/**
+ * POST /import
+ * Bulk imports products from a provided file path.
+ * Body: { file_path }
+ * Access: ALL
+ */
 router.post(
   "/import",
   appWrapper(async (req, res) => {
@@ -125,9 +134,12 @@ router.post(
 );
 
 
-//
-// GET PRODUCT BY ID
-// 
+/**
+ * GET /:id
+ * Retrieves a product by its ID.
+ * Params: id
+ * Access: ALL
+ */
 router.get(
   "/:id",
   appWrapper(async (req, res) => {
@@ -148,9 +160,13 @@ router.get(
   }, [ACCESS_ROLES.ALL])
 );
 
-// 
-// UPDATE PRODUCT
-// 
+/**
+ * PUT /update/:id
+ * Updates an already existing product.
+ * Params: id
+ * Body: { ...productData }
+ * Access: ALL
+ */
 router.put(
   "/update/:id",
   appWrapper(async (req, res) => {
@@ -190,10 +206,13 @@ router.put(
 );
 
 
-// 
-// DELETE PRODUCT
-// 
-router.post(
+/**
+ * DELETE /delete/:id
+ * Deletes a product by its ID.
+ * Params: id
+ * Access: ALL
+ */
+router.delete(
   "/delete/:id",
   appWrapper(async (req, res) => {
     const { id } = req.params;
@@ -214,6 +233,12 @@ router.post(
 );
 
 
+/**
+ * GET /sku/:sku
+ * Retrieves a product by its SKU.
+ * Params: sku
+ * Access: ALL
+ */
 router.get(
   "/sku/:sku",
   appWrapper(async (req, res) => {
@@ -235,9 +260,12 @@ router.get(
 );
 
 
-// ==========================
-// PRESIGNED URL FOR UPLOAD
-// ==========================
+/**
+ * POST /presigned-url
+ * Generates a presigned S3 URL for product image/barcode upload.
+ * Body: { fileName, functionality, subFunctionality }
+ * Access: ALL
+ */
 router.post(
   "/presigned-url",
   appWrapper(async (req, res) => {
@@ -248,7 +276,11 @@ router.post(
 );
 
 
-// generate BARCODE BY barcode id
+/**
+ * GET /barcode/:barcode
+ * Generates and returns a barcode image buffer for a product.
+ * Params: barcode
+ */
 router.get(
   "/barcode/:barcode",
   appWrapper(async (req, res) => {
@@ -275,7 +307,12 @@ router.get(
   })
 );
 
-// Get product full details (including stock breakdown)
+/**
+ * GET /productDetails/:id
+ * Retrieves detailed product information, including its stock breakdown.
+ * Params: id
+ * Access: ALL
+ */
 router.get(
   "/productDetails/:id",
   appWrapper(async (req, res) => {
@@ -299,7 +336,13 @@ router.get(
 
 
 
-// Get category products with stock quantities
+/**
+ * GET /category/:categoryName/with-stock
+ * Retrieves all products in a given category along with their stock quantities.
+ * Params: categoryName
+ * Query: page, limit, search
+ * Access: ALL
+ */
 router.get(
   "/category/:categoryName/with-stock",
   appWrapper(async (req, res) => {
@@ -341,7 +384,12 @@ router.get(
   }, [ACCESS_ROLES.ALL])
 );
 
-// Get products by Code (Variant Group)
+/**
+ * GET /code/:code
+ * Retrieves all products that share the same code (variant group).
+ * Params: code
+ * Access: ALL
+ */
 router.get(
   "/code/:code",
   appWrapper(async (req, res) => {
@@ -359,7 +407,12 @@ router.get(
 
 
 
-// Search for product codes (autocomplete)
+/**
+ * GET /codes/search
+ * Searches for product codes for autocomplete functionality.
+ * Query: query
+ * Access: ALL
+ */
 router.get(
   "/codes/search",
   appWrapper(async (req, res) => {
@@ -373,7 +426,13 @@ router.get(
   }, [ACCESS_ROLES.ALL])
 );
 
-// Get aggregated stock logs for a product
+/**
+ * GET /stock-logs/:id
+ * Retrieves aggregated stock logs for a specific product.
+ * Params: id
+ * Query: page, limit
+ * Access: ALL
+ */
 router.get(
   "/stock-logs/:id",
   appWrapper(async (req, res) => {

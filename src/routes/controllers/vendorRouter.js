@@ -5,6 +5,12 @@ const VendorManager = require("../../businesslogic/managers/VendorManager");
 
 const router = express.Router({ mergeParams: true });
 
+/**
+ * GET /get_all_vendors
+ * Retrieves all vendors with pagination.
+ * Query: page, limit
+ * Access: ALL
+ */
 router.get(
   "/get_all_vendors",
   appWrapper(
@@ -40,6 +46,12 @@ router.get(
 );
 
 
+/**
+ * POST /create_vendor
+ * Creates a new vendor.
+ * Body: { name, contact_person, email, etc. }
+ * Access: ALL
+ */
 router.post(
   "/create_vendor",
   appWrapper(async (req) => ({
@@ -49,6 +61,12 @@ router.post(
   }), [ACCESS_ROLES.ALL])
 );
 
+/**
+ * GET /get_vendor/:id
+ * Retrieves a specific vendor by its ID.
+ * Params: id
+ * Access: ALL
+ */
 router.get(
   "/get_vendor/:id",
   appWrapper(async (req) => {
@@ -59,6 +77,13 @@ router.get(
   }, [ACCESS_ROLES.ALL])
 );
 
+/**
+ * PUT /update_vendor/:id
+ * Updates an already existing vendor.
+ * Params: id
+ * Body: { ...vendorData }
+ * Access: ALL
+ */
 router.put(
   "/update_vendor/:id",
   appWrapper(async (req) => {
@@ -69,6 +94,12 @@ router.put(
   }, [ACCESS_ROLES.ALL])
 );
 
+/**
+ * DELETE /delete_vendor/:id
+ * Deletes a vendor by its ID.
+ * Params: id
+ * Access: ALL
+ */
 router.delete(
   "/delete_vendor/:id",
   appWrapper(async (req) => {

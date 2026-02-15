@@ -5,6 +5,12 @@ const shelfManager = require("../../businesslogic/managers/ShelfManager");
 
 const router = express.Router({ mergeParams: true });
 
+/**
+ * GET /get_all_shelfs
+ * Retrieves all shelves with pagination.
+ * Query: page, limit
+ * Access: ALL
+ */
 router.get(
   "/get_all_shelfs",
   appWrapper(async (req, res) => {
@@ -38,6 +44,12 @@ router.get(
 );
 
 
+/**
+ * POST /create_shelf
+ * Creates a new shelf.
+ * Body: { shelf_name, rack_id, etc. }
+ * Access: ACCOUNT_ADMIN, ACCOUNT_SUPER_ADMIN
+ */
 router.post(
   "/create_shelf",
   appWrapper(async (req, res) => ({
@@ -47,6 +59,12 @@ router.post(
   }), [ACCESS_ROLES.ACCOUNT_ADMIN, ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 );
 
+/**
+ * GET /get_shelf/:id
+ * Retrieves a specific shelf by its ID.
+ * Params: id
+ * Access: ALL
+ */
 router.get(
   "/get_shelf/:id",
   appWrapper(async (req, res) => {
@@ -57,6 +75,13 @@ router.get(
   }, [ACCESS_ROLES.ALL])
 );
 
+/**
+ * PUT /update_shelf/:id
+ * Updates an existing shelf.
+ * Params: id
+ * Body: { ...shelfData }
+ * Access: ACCOUNT_ADMIN, ACCOUNT_SUPER_ADMIN
+ */
 router.put(
   "/update_shelf/:id",
   appWrapper(async (req, res) => {
@@ -67,7 +92,13 @@ router.put(
   }, [ACCESS_ROLES.ACCOUNT_ADMIN, ACCESS_ROLES.ACCOUNT_SUPER_ADMIN])
 );
 
-router.post(
+/**
+ * DELETE /delete_shelf/:id
+ * Deletes a shelf by its ID.
+ * Params: id
+ * Access: ALL
+ */
+router.delete(
   "/delete_shelf/:id",
   appWrapper(async (req, res) => {
     const deleted = await shelfManager.deleteShelf(req.params, res.locals.userInfo?.user?.user_id);

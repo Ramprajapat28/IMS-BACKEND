@@ -7,6 +7,12 @@ const { RES_LOCALS } = require("../middleware/constant");
 const router = express.Router({ mergeParams: true });
 
 
+/**
+ * GET /get_all_rooms
+ * Retrieves all rooms with pagination.
+ * Query: page, limit
+ * Access: ALL
+ */
 router.get(
   "/get_all_rooms",
   appWrapper(
@@ -42,6 +48,12 @@ router.get(
 );
 
 
+/**
+ * POST /create_room
+ * Creates a new room.
+ * Body: { name, warehouse_id, etc. }
+ * Access: ACCOUNT_ADMIN, ACCOUNT_SUPER_ADMIN
+ */
 router.post(
   "/create_room",
   appWrapper(
@@ -60,6 +72,12 @@ router.post(
 );
 
 
+/**
+ * GET /get_room/:id
+ * Retrieves a specific room by its ID.
+ * Params: id
+ * Access: ACCOUNT_ADMIN, ACCOUNT_SUPER_ADMIN
+ */
 router.get(
   "/get_room/:id",
   appWrapper(
@@ -80,6 +98,13 @@ router.get(
 );
 
 
+/**
+ * PUT /update_room/:id
+ * Updates an existing room.
+ * Params: id
+ * Body: { name, warehouse_id, etc. }
+ * Access: ACCOUNT_ADMIN, ACCOUNT_SUPER_ADMIN
+ */
 router.put(
   "/update_room/:id",
   appWrapper(
@@ -104,7 +129,13 @@ router.put(
 );
 
 
-router.post(
+/**
+ * DELETE /delete_room/:id
+ * Deletes a room by its ID.
+ * Params: id
+ * Access: ACCOUNT_ADMIN, ACCOUNT_SUPER_ADMIN
+ */
+router.delete(
   "/delete_room/:id",
   appWrapper(
     async (req, res) => {

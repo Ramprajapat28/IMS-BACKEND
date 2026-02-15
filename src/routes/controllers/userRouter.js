@@ -3,7 +3,13 @@ const router = express.Router({ mergeParams: true });
 const UserManager = require("../../businesslogic/managers/UserManager");
 const { appWrapper } = require("../routeWrapper");
 
-router.put (
+/**
+ * PUT /profile/update/:id
+ * Updates a user's profile information.
+ * Params: id
+ * Body: { name, email, etc. }
+ */
+router.put(
   "/profile/update/:id",
   appWrapper(async (req, res) => {
     const { id } = req.params;
@@ -31,6 +37,11 @@ router.put (
   }));
 
 
+/**
+ * GET /profile/:id
+ * Retrieves a user's profile information by their ID.
+ * Params: id
+ */
 router.get("/profile/:id",
   appWrapper(async (req, res) => {
     const { id } = req.params;

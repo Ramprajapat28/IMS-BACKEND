@@ -5,7 +5,12 @@ const OrderManager = require("../../businesslogic/managers/OrderManager");
 const { appWrapper } = require("../routeWrapper");
 const { ACCESS_ROLES } = require("../../businesslogic/accessmanagement/roleConstants");
 
-// GET /orders/all - Get all orders with pagination and filters
+/**
+ * GET /all
+ * Retrieves all orders with pagination and filters.
+ * Query: page, limit, product_id, shelf_id, status
+ * Access: ALL
+ */
 router.get(
     "/all",
     appWrapper(async (req, res) => {
@@ -57,7 +62,12 @@ router.get(
     }, [ACCESS_ROLES.ALL])
 );
 
-// GET /orders/:order_id - Get order by ID with all details
+/**
+ * GET /orderId/:order_id
+ * Retrieves order details by its ID.
+ * Params: order_id
+ * Access: ALL
+ */
 router.get(
     "/orderId/:order_id",
     appWrapper(async (req, res) => {
@@ -80,7 +90,13 @@ router.get(
     }, [ACCESS_ROLES.ALL])
 );
 
-// PUT /orders/:order_id/status - Update order status
+/**
+ * PUT /status/:order_id
+ * Updates the status of an existing order.
+ * Params: order_id
+ * Body: { status }
+ * Access: ALL
+ */
 router.put(
     "/status/:order_id",
     appWrapper(async (req, res) => {
