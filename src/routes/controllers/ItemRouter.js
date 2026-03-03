@@ -63,7 +63,8 @@ router.post(
         order_id,
         shelf_id,
         rack_id,
-        mode
+        mode,
+        remark
       } = req.body;
 
       // Validate that either shelf_id or rack_id is provided
@@ -83,7 +84,8 @@ router.post(
           shelf_id,
           rack_id,
           mode,
-          res.locals.userInfo?.user?.user_id
+          res.locals.userInfo?.user?.user_id,
+          remark
         );
 
         if (!item) {
@@ -98,7 +100,6 @@ router.post(
           data: item,
           message: "Item(s) removed successfully",
         });
-
       } catch (err) {
         return res.status(400).json({
           success: false,

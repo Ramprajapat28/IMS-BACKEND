@@ -237,7 +237,7 @@ class ItemModel extends BaseModel {
     }
   }
 
-  async softDelete(product_id, quantity, status, shelf_id = null, rack_id = null) {
+  async softDelete(product_id, quantity, status, shelf_id = null, rack_id = null, remark = null) {
     try {
       const qb = await this.getQueryBuilder();
       const isReturn = status === ITEM_STATUS.AVAILABLE || status === ITEM_STATUS.RETURNED;
@@ -268,6 +268,7 @@ class ItemModel extends BaseModel {
         .update({
           is_deleted: isDeleted,
           status,
+          remark: remark ?? qb.raw("remark"),
           shelf_id: isReturn ? (shelf_id || null) : qb.raw("shelf_id"), // Update location on return
           rack_id: isReturn ? (rack_id || null) : qb.raw("rack_id"),   // Update location on return
           created_at: isReturn ? qb.raw("CURRENT_TIMESTAMP") : qb.raw("created_at"), // Refresh timestamp on return

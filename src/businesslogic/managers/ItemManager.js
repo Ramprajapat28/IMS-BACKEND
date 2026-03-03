@@ -45,6 +45,27 @@ class itemManager {
       }));
 
       const createdItems = await itemModel.bulkCreate(itemsToCreate, product_id);
+      const affected = createdItems.length;
+
+      // 3. Log Addition to stock_movements
+      if (affected > 0) {
+        try {
+          const qb = await itemModel.getQueryBuilder();
+          await qb("stock_movements").insert({
+            product_id,
+            quantity: affected,
+            source_type: null,
+            source_id: null,
+            dest_type: shelf_id ? 'shelf' : 'rack',
+            dest_id: shelf_id || rack_id,
+            remark: remark || 'New Stock Received',
+            created_by: userId,
+            created_at: qb.fn.now()
+          });
+        } catch (logError) {
+          console.error("Failed to log stock addition:", logError.message);
+        }
+      }
 
       return createdItems; // return all created rows
     } catch (error) {
@@ -60,7 +81,8 @@ class itemManager {
     shelf_id = null,
     rack_id = null,
     mode = ORDER_MODE.ONLINE,
-    userId = null
+    userId = null,
+    remark = null
   ) {
     try {
       const itemModel = new ItemModel(userId);
@@ -109,10 +131,36 @@ class itemManager {
         quantity,
         normalizedStatus,
         shelf_id,
-        rack_id
+        rack_id,
+        remark
       );
 
       const affected = affectedItemIds.length;
+
+      // ✅ Stricter Check specifically for the manual "Deduct" button
+      if (mode === 'adjustment' && affected < quantity) {
+        throw new Error(`Insufficient stock at this specific location. Requested: ${quantity}, Available: ${affected}`);
+      }
+
+      // 2. Log Removal to stock_movements
+      if (affected > 0) {
+        try {
+          const qb = await itemModel.getQueryBuilder();
+          await qb("stock_movements").insert({
+            product_id,
+            quantity: affected,
+            source_type: shelf_id ? 'shelf' : 'rack',
+            source_id: shelf_id || rack_id,
+            dest_type: null,
+            dest_id: null,
+            remark: remark || (isReturn ? 'Order Return' : 'Stock Correction'),
+            created_by: userId,
+            created_at: qb.fn.now()
+          });
+        } catch (logError) {
+          console.error("Failed to log stock removal:", logError.message);
+        }
+      }
 
       if (isReturn && affected === 0) {
         throw new Error("No sold items found to return");

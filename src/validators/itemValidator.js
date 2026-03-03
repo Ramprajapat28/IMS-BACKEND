@@ -67,7 +67,9 @@ const removeStockSchema = Joi.object({
       "number.integer": COMMON_MESSAGES.NUMBER_INTEGER,
       "number.positive": COMMON_MESSAGES.NUMBER_POSITIVE,
       "any.required": COMMON_MESSAGES.ANY_REQUIRED
-    })
+    }),
+
+  remark: Joi.string().allow("", null).optional().label("Remark")
 });
 
 const paginationSchema = Joi.object({

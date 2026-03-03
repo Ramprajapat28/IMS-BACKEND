@@ -553,24 +553,65 @@ class ProductModel extends BaseModel {
       const qb = await this.getQueryBuilder();
       const offset = (page - 1) * limit;
 
-      const itemsQuery = qb("items")
-        .select(qb.raw("DATE(items.created_at) as date"))
-        .select(qb.raw("'Added' as activity"))
-        .select(qb.raw("COUNT(*)::integer as quantity"))
-        .select(qb.raw("'New Stock Received' as remark"))
+      const stockMovementsBaseQuery = qb("stock_movements")
+        .select(qb.raw("DATE(stock_movements.created_at) as date"))
         .select("users.name as user_name")
-        .select(qb.raw("NULL as source_location"))
-        .select(qb.raw("COALESCE(w_s.name || ' -> ' || r_s.room_name || ' -> ' || s.shelf_name, w_rk.name || ' -> ' || r_rk.room_name || ' -> ' || rk.rack_name, 'Unassigned') as dest_location"))
-        .leftJoin("users", "items.created_by", "users.user_id")
-        .leftJoin("shelf as s", "items.shelf_id", "s.shelf_id")
-        .leftJoin("rooms as r_s", "s.room_id", "r_s.room_id")
-        .leftJoin("warehouses as w_s", "s.warehouse_id", "w_s.warehouse_id")
-        .leftJoin("racks as rk", "items.rack_id", "rk.rack_id")
-        .leftJoin("rooms as r_rk", "rk.room_id", "r_rk.room_id")
-        .leftJoin("warehouses as w_rk", "rk.warehouse_id", "w_rk.warehouse_id")
-        .where({ "items.product_id": product_id, "items.is_deleted": false })
-        .groupByRaw("DATE(items.created_at), users.name, items.shelf_id, items.rack_id, s.shelf_name, r_s.room_name, w_s.name, rk.rack_name, r_rk.room_name, w_rk.name");
+        .select("stock_movements.quantity")
+        .select("stock_movements.remark")
+        .select(qb.raw("COALESCE(sw_s.name || ' - ' || sr_s.room_name || ' - ' || ss.shelf_name, sw_rk.name || ' - ' || sr_rk.room_name || ' - ' || srk.rack_name) as source_location"))
+        .select(qb.raw("COALESCE(dw_s.name || ' - ' || dr_s.room_name || ' - ' || ds.shelf_name, dw_rk.name || ' - ' || dr_rk.room_name || ' - ' || drk.rack_name) as dest_location"))
+        .select("stock_movements.source_id", "stock_movements.dest_id")
+        .leftJoin("users", "stock_movements.created_by", "users.user_id")
+        // Source Joins
+        .leftJoin("shelf as ss", function () { this.on("stock_movements.source_id", "ss.shelf_id").andOn("stock_movements.source_type", qb.raw("'shelf'")) })
+        .leftJoin("rooms as sr_s", "ss.room_id", "sr_s.room_id")
+        .leftJoin("warehouses as sw_s", "ss.warehouse_id", "sw_s.warehouse_id")
+        .leftJoin("racks as srk", function () { this.on("stock_movements.source_id", "srk.rack_id").andOn("stock_movements.source_type", qb.raw("'rack'")) })
+        .leftJoin("rooms as sr_rk", "srk.room_id", "sr_rk.room_id")
+        .leftJoin("warehouses as sw_rk", "srk.warehouse_id", "sw_rk.warehouse_id")
+        // Destination Joins
+        .leftJoin("shelf as ds", function () { this.on("stock_movements.dest_id", "ds.shelf_id").andOn("stock_movements.dest_type", qb.raw("'shelf'")) })
+        .leftJoin("rooms as dr_s", "ds.room_id", "dr_s.room_id")
+        .leftJoin("warehouses as dw_s", "ds.warehouse_id", "dw_s.warehouse_id")
+        .leftJoin("racks as drk", function () { this.on("stock_movements.dest_id", "drk.rack_id").andOn("stock_movements.dest_type", qb.raw("'rack'")) })
+        .leftJoin("rooms as dr_rk", "drk.room_id", "dr_rk.room_id")
+        .leftJoin("warehouses as dw_rk", "drk.warehouse_id", "dw_rk.warehouse_id")
+        .where({ "stock_movements.product_id": product_id });
 
+      // 1. Added Logs (Source is NULL)
+      const addedQuery = qb.select(
+        "date",
+        qb.raw("'Added' as activity"),
+        "quantity",
+        "remark",
+        "user_name",
+        qb.raw("NULL as source_location"),
+        "dest_location"
+      ).from(stockMovementsBaseQuery.as("sm")).whereNull("source_id");
+
+      // 2. Removed Logs (Dest is NULL)
+      const removedQuery = qb.select(
+        "date",
+        qb.raw("'Removed' as activity"),
+        "quantity",
+        "remark",
+        "user_name",
+        "source_location",
+        qb.raw("NULL as dest_location")
+      ).from(stockMovementsBaseQuery.as("sm")).whereNull("dest_id");
+
+      // 3. Transferred Logs (Both NOT NULL)
+      const movementsQuery = qb.select(
+        "date",
+        qb.raw("'Transferred' as activity"),
+        "quantity",
+        "remark",
+        "user_name",
+        "source_location",
+        "dest_location"
+      ).from(stockMovementsBaseQuery.as("sm")).whereNotNull("source_id").whereNotNull("dest_id");
+
+      // 4. Returned Logs (from orders)
       const ordersQuery = qb("orders")
         .select(qb.raw("DATE(orders.created_at) as date"))
         .select(qb.raw("'Returned' as activity"))
@@ -589,31 +630,7 @@ class ProductModel extends BaseModel {
         .where({ "orders.product_id": product_id, status: 'returned', "orders.is_deleted": false })
         .groupByRaw("DATE(orders.created_at), users.name, orders.shelf_id, orders.rack_id, s.shelf_name, r_s.room_name, w_s.name, rk.rack_name, r_rk.room_name, w_rk.name");
 
-      const movementsQuery = qb("stock_movements")
-        .select(qb.raw("DATE(stock_movements.created_at) as date"))
-        .select(qb.raw("'Transferred' as activity"))
-        .select(qb.raw("SUM(quantity)::integer as quantity"))
-        .select(qb.raw("MAX(remark) as remark"))
-        .select("users.name as user_name")
-        .select(qb.raw("COALESCE(sw_s.name || ' - ' || sr_s.room_name || ' - ' || ss.shelf_name, sw_rk.name || ' - ' || sr_rk.room_name || ' - ' || srk.rack_name, 'Unknown') as source_location"))
-        .select(qb.raw("COALESCE(dw_s.name || ' - ' || dr_s.room_name || ' - ' || ds.shelf_name, dw_rk.name || ' - ' || dr_rk.room_name || ' - ' || drk.rack_name, 'Unknown') as dest_location"))
-        .leftJoin("users", "stock_movements.created_by", "users.user_id")
-        .leftJoin("shelf as ss", function () { this.on("stock_movements.source_id", "ss.shelf_id").andOn("stock_movements.source_type", qb.raw("'shelf'")) })
-        .leftJoin("rooms as sr_s", "ss.room_id", "sr_s.room_id")
-        .leftJoin("warehouses as sw_s", "ss.warehouse_id", "sw_s.warehouse_id")
-        .leftJoin("racks as srk", function () { this.on("stock_movements.source_id", "srk.rack_id").andOn("stock_movements.source_type", qb.raw("'rack'")) })
-        .leftJoin("rooms as sr_rk", "srk.room_id", "sr_rk.room_id")
-        .leftJoin("warehouses as sw_rk", "srk.warehouse_id", "sw_rk.warehouse_id")
-        .leftJoin("shelf as ds", function () { this.on("stock_movements.dest_id", "ds.shelf_id").andOn("stock_movements.dest_type", qb.raw("'shelf'")) })
-        .leftJoin("rooms as dr_s", "ds.room_id", "dr_s.room_id")
-        .leftJoin("warehouses as dw_s", "ds.warehouse_id", "dw_s.warehouse_id")
-        .leftJoin("racks as drk", function () { this.on("stock_movements.dest_id", "drk.rack_id").andOn("stock_movements.dest_type", qb.raw("'rack'")) })
-        .leftJoin("rooms as dr_rk", "drk.room_id", "dr_rk.room_id")
-        .leftJoin("warehouses as dw_rk", "drk.warehouse_id", "dw_rk.warehouse_id")
-        .where({ "stock_movements.product_id": product_id })
-        .groupByRaw("DATE(stock_movements.created_at), users.name, stock_movements.source_id, stock_movements.source_type, stock_movements.dest_id, stock_movements.dest_type, sr_s.room_name, ss.shelf_name, sw_s.name, sr_rk.room_name, srk.rack_name, sw_rk.name, dr_s.room_name, ds.shelf_name, dw_s.name, dr_rk.room_name, drk.rack_name, dw_rk.name");
-
-      const unionQuery = qb.unionAll([itemsQuery, ordersQuery, movementsQuery], true);
+      const unionQuery = qb.unionAll([addedQuery, removedQuery, ordersQuery, movementsQuery], true);
 
       const data = await qb
         .from(unionQuery.as("combined_logs"))
