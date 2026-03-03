@@ -33,5 +33,5 @@ exports.up = function (knex) {
  * @returns { Promise<void> }
  */
 exports.down = function (knex) {
-  return 
+  return knex.schema.withSchema('public').dropTableIfExists('rooms');
 };

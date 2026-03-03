@@ -11,7 +11,7 @@ exports.up = function(knex) {
     table.increments('product_id').notNullable().primary(); // pk
     table.string('name', 255).notNullable();
     table.string('description', 1000);
-    table.integer('stock_quantity').notNullable().defaultTo(0);
+    // table.integer('stock_quantity').notNullable().defaultTo(0);
     // table.integer('category_id').references('category_id').inTable('categories').onDelete('SET NULL');
     table.string('sku', 100).unique();
     table.string('barcode', 100).unique();
@@ -19,7 +19,7 @@ exports.up = function(knex) {
     
     table.integer('vendor_id').references('vendor_id').inTable('public.vendors').onDelete('SET NULL');
 
-    table.boolean('is_active').defaultTo(true);
+   
     
 
     addDefaultColumns(table, knex);
@@ -28,7 +28,6 @@ exports.up = function(knex) {
     table.index('name');
     table.index('sku');
     table.index('barcode');
-    table.index('is_active');
 });
 };
 

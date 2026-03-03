@@ -19,7 +19,9 @@ exports.up = async function (knex) {
                 .string('name', 50).notNullable();
 
             table    
-                .string('status', 50).notNullable();
+                .string("status")
+      .notNullable()
+      .defaultTo("available");
 
             table
                 .integer('shelf_id').notNullable()

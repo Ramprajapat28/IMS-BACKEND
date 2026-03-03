@@ -14,15 +14,15 @@ exports.up = function(knex) {
         table.string('vendor_name',255).notNullable();
         table.string('email',255).unique().notNullable();
         table.string('phone',50).notNullable();
-        table.string('password',255).nullable();
+       
         table.text('address').nullable();
-        table.boolean('is_active').defaultTo(true).notNullable();
+       
 
         addDefaultColumns(table,knex);
 
-        // table.index('email');
-        table.index('is_active');
-        table.index(['is_active','vendor_name']);
+       
+      
+    
     });
 };
 
