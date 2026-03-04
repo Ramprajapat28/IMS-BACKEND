@@ -578,38 +578,46 @@ class ProductModel extends BaseModel {
         .leftJoin("warehouses as dw_rk", "drk.warehouse_id", "dw_rk.warehouse_id")
         .where({ "stock_movements.product_id": product_id });
 
+
       // 1. Added Logs (Source is NULL)
       const addedQuery = qb.select(
         "date",
         qb.raw("'Added' as activity"),
-        "quantity",
+        qb.raw("SUM(quantity)::integer as quantity"),
         "remark",
         "user_name",
         qb.raw("NULL as source_location"),
         "dest_location"
-      ).from(stockMovementsBaseQuery.as("sm")).whereNull("source_id");
+      ).from(stockMovementsBaseQuery.as("sm"))
+        .whereNull("source_id")
+        .groupBy("date", "remark", "user_name", "dest_location");
 
       // 2. Removed Logs (Dest is NULL)
       const removedQuery = qb.select(
         "date",
         qb.raw("'Removed' as activity"),
-        "quantity",
+        qb.raw("SUM(quantity)::integer as quantity"),
         "remark",
         "user_name",
         "source_location",
         qb.raw("NULL as dest_location")
-      ).from(stockMovementsBaseQuery.as("sm")).whereNull("dest_id");
+      ).from(stockMovementsBaseQuery.as("sm"))
+        .whereNull("dest_id")
+        .groupBy("date", "remark", "user_name", "source_location");
 
       // 3. Transferred Logs (Both NOT NULL)
       const movementsQuery = qb.select(
         "date",
         qb.raw("'Transferred' as activity"),
-        "quantity",
+        qb.raw("SUM(quantity)::integer as quantity"),
         "remark",
         "user_name",
         "source_location",
         "dest_location"
-      ).from(stockMovementsBaseQuery.as("sm")).whereNotNull("source_id").whereNotNull("dest_id");
+      ).from(stockMovementsBaseQuery.as("sm"))
+        .whereNotNull("source_id")
+        .whereNotNull("dest_id")
+        .groupBy("date", "remark", "user_name", "source_location", "dest_location");
 
       // 4. Returned Logs (from orders)
       const ordersQuery = qb("orders")
