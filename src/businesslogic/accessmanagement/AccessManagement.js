@@ -21,7 +21,7 @@ class AccessManagement {
     // Admin check (case-insensitive)
     if (
       allowedRoles.includes(ACCESS_ROLES.ACCOUNT_ADMIN) &&
-      roleNames.includes(USER_ROLES_INFO.ADMIN.NAME.trim().toLowerCase())
+      roleNames.includes(ACCESS_ROLES.ACCOUNT_ADMIN.trim().toLowerCase())
     ) {
       return true;
     }
@@ -29,7 +29,7 @@ class AccessManagement {
     // Super Admin check (case-insensitive)
     if (
       allowedRoles.includes(ACCESS_ROLES.ACCOUNT_SUPER_ADMIN) &&
-      roleNames.includes(USER_ROLES_INFO.SUPER_ADMIN.NAME.trim().toLowerCase())
+      roleNames.includes(ACCESS_ROLES.ACCOUNT_SUPER_ADMIN.trim().toLowerCase())
     ) {
       return true;
     }
