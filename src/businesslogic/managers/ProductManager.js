@@ -487,11 +487,14 @@ class ProductManager {
 
 
 
-      // barcode image
-      const barcodeResult = await generateAndUploadBarcode(value.sku);
-      value.barcode_image = JSON.stringify({
-        file_path: barcodeResult.cdnUrl
-      });
+      // barcode image (optional — skipped gracefully if S3 is not configured)
+      try {
+        const barcodeResult = await generateAndUploadBarcode(value.sku);
+        value.barcode_image = JSON.stringify({ file_path: barcodeResult.cdnUrl });
+      } catch (barcodeErr) {
+        console.warn("Barcode upload skipped (S3 not configured):", barcodeErr.message);
+        value.barcode_image = null;
+      }
 
       // product images
       if (!Array.isArray(value.product_image)) {
@@ -542,12 +545,13 @@ class ProductManager {
         // 1. Update text barcode
         value.barcode = value.sku;
 
-        // 2. Generate new barcode image
-        const barcodeResult = await generateAndUploadBarcode(value.sku);
-        value.barcode_image = {
-          file_path: barcodeResult.cdnUrl
-        };
-
+        // 2. Generate new barcode image (optional — skipped gracefully if S3 is not configured)
+        try {
+          const barcodeResult = await generateAndUploadBarcode(value.sku);
+          value.barcode_image = { file_path: barcodeResult.cdnUrl };
+        } catch (barcodeErr) {
+          console.warn("Barcode upload skipped (S3 not configured):", barcodeErr.message);
+        }
       }
 
       // ✅ Normalize product_image for JSONB array
