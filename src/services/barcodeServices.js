@@ -1,30 +1,29 @@
 const bwipjs = require("bwip-js");
-const { uploadToS3 } = require("./s3Services");
+const { uploadBufferToCloudinary } = require("./cloudinaryServices");
 
 async function generateAndUploadBarcode(barcodeValue) {
     const buffer = await bwipjs.toBuffer({
-      bcid: "code128",     // barcode type
-        text: barcodeValue,           // SKU = barcode value
-        scale: 3,          // controls width
-        height: 15,        // bar height (mm-ish)
-        width:50,        // force total width
+        bcid: "code128",
+        text: barcodeValue,
+        scale: 3,
+        height: 15,
+        width: 50,
         paddingwidth: 10,
         paddingheight: 10,
-
         includetext: false,
         textsize: 8,
         textxalign: "center",
-     
         backgroundcolor: "FFFFFF",
     });
 
-    const filePath = `app_assets/products/barcodes/${barcodeValue}.png`;
+    const folder = "app_assets/products/barcodes";
+    const publicId = barcodeValue; // use SKU as the public_id
 
-    const cdnUrl = await uploadToS3(buffer, filePath, "image/png");
+    const cdnUrl = await uploadBufferToCloudinary(buffer, folder, publicId, "image");
 
     return {
         barcodeValue,
-        filePath,
+        filePath: `${folder}/${publicId}`,
         cdnUrl
     };
 }
